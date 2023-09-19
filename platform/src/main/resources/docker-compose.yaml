@@ -19,3 +19,12 @@ services:
       timeout: 2s
       retries: 5
     command: ["start-dev"]
+  node:
+    image: node:20
+    user: "node"
+    working_dir: /home/node/app
+    volumes:
+      - ./:/home/node/app
+    expose:
+      - "8081"
+    command: "npm start"

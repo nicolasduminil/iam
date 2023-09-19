@@ -10,7 +10,6 @@
   <name>IAM :: The Master POM</name>
   <modules>
     <module>platform</module>
-    <module>front-end</module>
   </modules>
   <properties>
     <maven.compiler.source>17</maven.compiler.source>
