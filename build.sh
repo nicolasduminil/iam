@@ -1,5 +1,5 @@
 mvn clean install
-until curl http://localhost:8080/health/ready -sf -o /dev/null;
+until curl --head http://localhost:8080/health/ready -sf -o /dev/null;
 do
   sleep 5
 done
