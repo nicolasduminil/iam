@@ -2,45 +2,55 @@
 <html lang="en"
       xmlns:f="jakarta.faces.core"
       xmlns:h="jakarta.faces.html"
-      xmlns:ui="jakarta.faces.facelets"
       xmlns:p="http://primefaces.org/ui">
 <f:view contentType="text/html">
-    <h:head>
-    </h:head>
-    <h:body>
-        <p:growl id="msgs" showDetail="true" skipDetailIfEqualsSummary="true"/>
-        <div class="card">
-            <h5 class="mt-0">OpenID Connect Sandbox</h5>
-            <p:tabView>
-                <p:tab title="Discovery">
-                    <!--h5>The Issuer URL</h5-->
-                    <h:form id="issuer-form">
-                        <h:panelGrid id="issuer-grid" columns="4" cellpadding="7">
-                            <p:outputLabel for="issuer-url" value="Issuer URL:"/>
-                            <p:inputText id="issuer-url"/>
-                        </h:panelGrid>
-                        <p:commandButton value="Load Privider Metadata" update="issuer-grid" styleClass="mt-3" />
-                        <h:outputText id="metadata" rendered="#{openIdConnectView.metadata}" value="#{openIdConnectView.metadata}"/>
-                    </h:form>
-                </p:tab>
-                <p:tab title="Authentication">
-                    <h:form id="authentication-form">
-                    </h:form>
-                </p:tab>
-                <p:tab title="Token">
-                    <h:form id="token-form">
-                    </h:form>
-                </p:tab>
-                <p:tab title="Refresh">
-                    <h:form id="refresh-form">
-                    </h:form>
-                </p:tab>
-                <p:tab title="Userinfo">
-                    <h:form id="user-info-form">
-                    </h:form>
-                </p:tab>
-            </p:tabView>
-        </div>
-    </h:body>
+  <h:head>
+  </h:head>
+  <h:body>
+    <p:growl id="msgs" showDetail="true" skipDetailIfEqualsSummary="true"/>
+    <div class="card">
+      <h3 class="mt-0">OpenID Connect Sandbox</h3>
+      <p:tabView id="discovery-tab-view">
+        <p:tab id="discovery-tab" title="Discovery">
+          <h:form id="issuer-url-form">
+            <p:panelGrid id="issuer-url-grid" columns="1">
+              <h4>The Issuer URL</h4>
+              <p:inputText id="issuer-uri" value="#{openIdConnectView.issuerUrl}" style="width: 430px"/>
+              <p:watermark id="issuer-url-watermark" for="issuer-uri" value="#{openIdConnectView.issuerUrl}"/>
+              <small id="issuer-url-small">Type the issuer URI or accept the default</small>
+            </p:panelGrid>
+          </h:form>
+          <h:form id="metadata-form" >
+            <p:panelGrid id="metadata-grid" columns="1" rendered="#{openIdConnectView.metadata}">
+              <h4>Metadata</h4>
+              <p:scrollPanel id="metadata-panel" style="width:1000px;height:300px">
+                <h:outputText style="font-size: 12px !important;" value="#{openIdConnectView.metaData}"/>
+              </p:scrollPanel>
+            </p:panelGrid>
+          </h:form>
+          <h:form id="command-form">
+            <p:commandButton id="command-button" style="width: auto" value="Load Provider Metadata" styleClass="mt-3"
+              update="@all" action="#{openIdConnectView.getDiscoveryMetadata()}"/>
+          </h:form>
+        </p:tab>
+        <p:tab title="Authentication">
+          <h:form id="authentication-form">
+          </h:form>
+        </p:tab>
+        <p:tab title="Token">
+          <h:form id="token-form">
+          </h:form>
+        </p:tab>
+        <p:tab title="Refresh">
+          <h:form id="refresh-form">
+          </h:form>
+        </p:tab>
+        <p:tab title="Userinfo">
+          <h:form id="user-info-form">
+          </h:form>
+        </p:tab>
+      </p:tabView>
+    </div>
+  </h:body>
 </f:view>
 </html>

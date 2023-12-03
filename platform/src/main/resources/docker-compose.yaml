@@ -19,10 +19,21 @@ services:
       timeout: 2s
       retries: 5
     command: ["start-dev"]
+  iam-backend:
+    image: nicolasduminil/iam-back-end:1.0-SNAPSHOT
+    depends_on:
+      - keycloak
+    container_name: iam-backend
+    links:
+      - keycloak:keycloak
+    hostname: iam-backend
+    ports:
+      - "8081:8081"
   iam-frontend:
     image: nicolasduminil/iam-front-end:1.0-SNAPSHOT
     depends_on:
       - keycloak
+      - iam-backend
     container_name: iam-frontend
     links:
       - keycloak:keycloak
