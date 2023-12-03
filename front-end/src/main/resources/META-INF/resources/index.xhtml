@@ -14,18 +14,14 @@
         <p:tab id="discovery-tab" title="Discovery">
           <h:form id="issuer-url-form">
             <p:panelGrid id="issuer-url-grid" columns="1">
-              <h4>The Issuer URL</h4>
-              <p:inputText id="issuer-uri" value="#{openIdConnectView.issuerUrl}" style="width: 430px"/>
-              <p:watermark id="issuer-url-watermark" for="issuer-uri" value="#{openIdConnectView.issuerUrl}"/>
-              <small id="issuer-url-small">Type the issuer URI or accept the default</small>
+              <h4>OpenID Endpoint Configuration</h4>
+              <h:inputTextarea id="issuer-uri" cols="50" rows="1" readonly="true" value="#{openIdConnectView.issuerUrl}" />
             </p:panelGrid>
           </h:form>
           <h:form id="metadata-form" >
             <p:panelGrid id="metadata-grid" columns="1" rendered="#{openIdConnectView.metadata}">
               <h4>Metadata</h4>
-              <p:scrollPanel id="metadata-panel" style="width:1000px;height:300px">
-                <h:outputText style="font-size: 12px !important;" value="#{openIdConnectView.metaData}"/>
-              </p:scrollPanel>
+              <h:inputTextarea id="metadata-text" cols="100" rows="4" readonly="true" value="#{openIdConnectView.metaData}" />
             </p:panelGrid>
           </h:form>
           <h:form id="command-form">

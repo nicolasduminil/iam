@@ -5,6 +5,7 @@ import jakarta.faces.application.*;
 import jakarta.faces.context.*;
 import jakarta.faces.view.*;
 import jakarta.inject.*;
+import jakarta.json.*;
 import jakarta.ws.rs.core.*;
 import org.eclipse.microprofile.config.inject.*;
 import org.eclipse.microprofile.rest.client.inject.*;
@@ -33,27 +34,19 @@ public class OpenIdConnectView implements Serializable
 
   public boolean isMetadata()
   {
-    System.out.println ("### Calling isMetadata()");
-    if (metaData != null)
-      System.out.println (">>> metadata is not null");
-    else
-      System.out.println (">>> metadata is null");
     return metaData != null;
   }
 
   public void getDiscoveryMetadata()
   {
-    System.out.println ("### Before calling loadDiscoveryMetadata()");
-    if (metaData != null)
-      System.out.println (">>> metadata is not null");
-    else
-      System.out.println (">>> metadata is null");
-    metaData = iamServiceClient.loadDiscoveryMetadata().readEntity(String.class);
-    System.out.println ("### After calling loadDiscoveryMetadata()");
-    if (metaData != null)
-      System.out.println (">>> metadata is not null");
-    else
-      System.out.println (">>> metadata is null");
+    final String fmt = "issuer: %s%nauthorization_endpoint: %s%ntoken_endpoint: %s%nuserinfo_endpoint: %s";
+    JsonObject jsonObject = Json.createReader(new StringReader(iamServiceClient.loadDiscoveryMetadata().readEntity(String.class))).readObject();
+    /*String issuer = jsonObject.getString("issuer");
+    String authorizationEndpoint = jsonObject.getString("authorization_endpoint");
+    String tokenEndpoint = jsonObject.getString("token_endpoint");
+    String userInfoEndpoint = jsonObject.getString("userinfo_endpoint");
+    new StringWriter().write(*/
+    metaData = String.format(fmt, jsonObject.getString("issuer"), jsonObject.getString("authorization_endpoint"), jsonObject.getString("token_endpoint"), jsonObject.getString("userinfo_endpoint"));
   }
 
   public String getMetaData()
