@@ -9,19 +9,15 @@ import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.*;
 import org.eclipse.microprofile.config.inject.*;
 
-import java.net.*;
-
-@ApplicationScoped
+@RequestScoped
 @Path("/api/be")
 public class BackEndProvider implements BackEndAPI
 {
   @ConfigProperty(name = "keycloak.server-url")
   String serverUrl;
-  @ConfigProperty(name = "keycloak.issuer-uri")
-  String issuerUri;
-  @ConfigProperty(name = "keycloak.authorization-uri")
-  String authorizationUri;
   private WebTarget webTarget;
+  @ConfigProperty(name = "keycloak.authorization-uri-fmt")
+  String fmt;
 
   @PostConstruct
   public void postConstruct()
@@ -30,27 +26,26 @@ public class BackEndProvider implements BackEndAPI
   }
 
   @Override
-  public Response loadDiscoveryMetadata()
+  public Response loadDiscoveryMetadata(String issuerUri)
   {
-    /*System.out.println ("### issuerURI: " + issuerUri);
-    WebTarget path = webTarget.path(issuerUri);
-    System.out.println ("### path: " + path);
-    URI uri = path.getUri();
-    System.out.println ("### URI: " + uri.toString());*/
-    //String str = path.request(MediaType.APPLICATION_JSON).get(String.class);
-    //ClientBuilder.newClient();
-    /*String str = "ResponseResponseResponse";
-    System.out.println ("### Response: " + str);*/
     return Response.ok(webTarget.path(issuerUri).request(MediaType.APPLICATION_JSON).get(String.class)).build();
-    /*Response response = Response.ok(str).build();
-    System.out.println ("### Returning: " + response.readEntity(String.class));
-    return response;*/
   }
 
   @Override
-  public Response sendAuthenticationRequest(AuthenticationInput authenticationInput)
+  public Response sendAuthorizationRequest(AuthorizationRequest authorizationRequest)
   {
-    return Response.ok(webTarget.path(authorizationUri).request(MediaType.APPLICATION_JSON).get(String.class)).build();
+    System.out.println ("### authorizationUri: " + authorizationRequest.authorizationUri + " client_id " + authorizationRequest.clientId
+      + " response_type " + authorizationRequest.responseType + " redirectUri " + authorizationRequest.redirectUri + " scope " + authorizationRequest.scope);
+    /*System.out.println ("### FMT: " + fmt);
+    String url = String.format(fmt, clientId, respnseType, redirectUri);
+    System.out.println ("### URL: " + url);
+    return Response.status(Response.Status.SEE_OTHER)
+      .header(HttpHeaders.LOCATION, url)
+      .build();*/
+    return Response.ok(webTarget.path(authorizationRequest.authorizationUri).queryParam("client_id", authorizationRequest.clientId)
+      .queryParam("response_type", authorizationRequest.responseType).queryParam("redirect_uri", authorizationRequest.redirectUri)
+      .queryParam("scope", "openid").request(MediaType.APPLICATION_JSON).get(String.class)).build();
+
   }
 
   @Override

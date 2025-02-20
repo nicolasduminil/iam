@@ -14,14 +14,14 @@ public interface BackEndAPI
 {
   @Operation(summary = "Load discovery metadata", description = "Display the OpenId Connect Metadata")
   @APIResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = DiscoveryMetadata.class)))
-  @GET
+  @POST
   @Path("load")
-  Response loadDiscoveryMetadata();
-  @Operation(summary = "Send authentication request", description = "Send an authentication request")
+  Response loadDiscoveryMetadata(String issuerUri);
+  @Operation(summary = "Send authorization request", description = "Send an authorization request")
   @APIResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = String.class)))
   @POST
   @Path("auth")
-  Response sendAuthenticationRequest (@Parameter(description = "the authentication request", schema = @Schema(implementation = AuthenticationInput.class, required = true)) AuthenticationInput authenticationInput);
+  Response sendAuthorizationRequest(@Parameter(description = "the OAuth 2 client ID", schema = @Schema(implementation = String.class, required = true))AuthorizationRequest authorizationRequest);
   @Operation(summary = "Send token request", description = "Send a token request")
   @APIResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TokenResponse.class)))
   @POST

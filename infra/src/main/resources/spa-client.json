@@ -1,0 +1,11 @@
+{
+  "clientId" : "spa",
+  "enabled" : true,
+  "publicClient" : true,
+  "standardFlowEnabled" : true,
+  "implicitFlowEnabled" : false,
+  "directAccessGrantsEnabled" : true,
+  "attributes": {
+    "pkce.code.challenge.method": "S256"
+  }
+}

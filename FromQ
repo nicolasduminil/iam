@@ -1,0 +1,125 @@
+package fr.simplex_software.iam.fe.view;
+
+import com.fasterxml.jackson.databind.*;
+import jakarta.faces.application.*;
+import jakarta.faces.context.*;
+import jakarta.faces.view.*;
+import jakarta.inject.*;
+import jakarta.servlet.http.*;
+import jakarta.ws.rs.client.*;
+import jakarta.ws.rs.core.*;
+import org.apache.myfaces.util.lang.*;
+
+import java.io.*;
+import java.util.*;
+
+@Named
+@ViewScoped
+public class FromQ implements Serializable
+{
+  private String issuer;
+  private String clientId;
+  private String scope;
+  private String prompt;
+  private String maxAge;
+  private String loginHint;
+  private String code;
+  private String discoveryJson;
+  private String idToken;
+  private String accessToken;
+  private String refreshToken;
+  private Map<String, Object> discovery;
+
+  @Inject
+  private FacesContext facesContext;
+
+  // Getters and setters for all properties
+
+  /*public void loadDiscovery() {
+    Client client = ClientBuilder.newClient();
+    try {
+      String discoveryEndpoint = issuer + "/.well-known/openid-configuration";
+      discovery = client.target(discoveryEndpoint)
+        .request(MediaType.APPLICATION_JSON)
+        .get(Map.class);
+      discoveryJson = new ObjectMapper().writeValueAsString(discovery);
+    } catch (Exception e) {
+      FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+        "Error loading discovery document", e.getMessage());
+      facesContext.addMessage(null, message);
+    }
+  }
+
+  public String generateAuthenticationRequest() {
+    if (discovery == null || discovery.isEmpty()) {
+      FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+        "Discovery document not loaded", null);
+      facesContext.addMessage(null, message);
+      return null;
+    }
+
+    String authEndpoint = (String) discovery.get("authorization_endpoint");
+    String redirectUri = getRedirectUri();
+
+    UriBuilder builder = UriBuilder.fromUri(authEndpoint)
+      .queryParam("client_id", clientId)
+      .queryParam("response_type", "code")
+      .queryParam("redirect_uri", redirectUri);
+
+    if (StringUtils.isNotBlank(scope)) {
+      builder.queryParam("scope", scope);
+    }
+    if (StringUtils.isNotBlank(prompt)) {
+      builder.queryParam("prompt", prompt);
+    }
+    if (StringUtils.isNotBlank(maxAge)) {
+      builder.queryParam("max_age", maxAge);
+    }
+    if (StringUtils.isNotBlank(loginHint)) {
+      builder.queryParam("login_hint", loginHint);
+    }
+
+    return builder.build().toString();
+  }
+
+  public void handleCallback() {
+    Map<String, String> params = facesContext.getExternalContext()
+      .getRequestParameterMap();
+    code = params.get("code");
+    if (code != null) {
+      exchangeCodeForTokens();
+    }
+  }
+
+  private void exchangeCodeForTokens() {
+    Client client = ClientBuilder.newClient();
+    Form form = new Form()
+      .param("grant_type", "authorization_code")
+      .param("code", code)
+      .param("client_id", clientId)
+      .param("redirect_uri", getRedirectUri());
+
+    try {
+      String tokenEndpoint = (String) discovery.get("token_endpoint");
+      Response response = client.target(tokenEndpoint)
+        .request(MediaType.APPLICATION_JSON)
+        .post(Entity.form(form));
+
+      Map<String, Object> tokens = response.readEntity(Map.class);
+      refreshToken = (String) tokens.get("refresh_token");
+      idToken = (String) tokens.get("id_token");
+      accessToken = (String) tokens.get("access_token");
+    } catch (Exception e) {
+      FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+        "Error exchanging code for tokens", e.getMessage());
+      facesContext.addMessage(null, message);
+    }
+  }
+
+  private String getRedirectUri() {
+    HttpServletRequest request = (HttpServletRequest) facesContext
+      .getExternalContext().getRequest();
+    String uri = request.getRequestURL().toString();
+    return uri.substring(0, uri.lastIndexOf("/"));
+  }*/
+}

@@ -1,0 +1,16 @@
+{
+  "clientId" : "be",
+  "enabled" : true,
+  "clientAuthenticatorType" : "client-secret",
+  "secret" : "this_is_a_secret",
+  "protocol" : "openid-connect",
+  "publicClient" : false,
+  "bearerOnly" : true,
+  "standardFlowEnabled" : false,
+  "implicitFlowEnabled" : false,
+  "directAccessGrantsEnabled" : true,
+  "serviceAccountsEnabled" : true,
+  "redirectUris" : [ "http://localhost:8080" ],
+  "webOrigins" : ["http://localhost:8080"],
+  "rootUrl" : "http://localhost:8080"
+}

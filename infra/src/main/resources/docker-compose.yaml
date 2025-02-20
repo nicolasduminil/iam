@@ -13,30 +13,30 @@ services:
       KC_HEALTH_ENABLED: "true"
     volumes:
       - ./scripts/customize.sh:/opt/keycloak/customization/customize.sh
+      - ./spa-client.json:/opt/keycloak/customization/spa-client.json
+      - ./fe-client.json:/opt/keycloak/customization/fe-client.json
+      - ./be-client.json:/opt/keycloak/customization/be-client.json
     healthcheck:
-      test: [ "CMD", "curl", "--head", "http://keycloak:8080/health/ready", "-sf" ]
+      test: [ "CMD", "curl", "--head", "http://localhost:8080/health/ready", "-sf" ]
       interval: 10s
       timeout: 2s
-      retries: 5
+      retries: 15
     command: ["start-dev"]
   iam-backend:
     image: nicolasduminil/iam-back-end:1.0-SNAPSHOT
     depends_on:
       - keycloak
     container_name: iam-backend
-    links:
-      - keycloak:keycloak
     hostname: iam-backend
     ports:
       - "8081:8081"
   iam-frontend:
     image: nicolasduminil/iam-front-end:1.0-SNAPSHOT
     depends_on:
-      - keycloak
       - iam-backend
     container_name: iam-frontend
-    links:
-      - keycloak:keycloak
     hostname: iam-frontend
     ports:
       - "8082:8082"
+
+
