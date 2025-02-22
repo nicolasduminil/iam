@@ -39,10 +39,10 @@
       <groupId>io.quarkiverse.primefaces</groupId>
       <artifactId>quarkus-primefaces-extensions</artifactId>
     </dependency>
-    <dependency>
+    <!--dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-oidc</artifactId>
-    </dependency>
+    </dependency-->
     <dependency>
       <groupId>fr.simplex-software</groupId>
       <artifactId>common</artifactId>

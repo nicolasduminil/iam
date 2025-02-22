@@ -9,6 +9,7 @@ import jakarta.faces.view.*;
 import jakarta.inject.*;
 import jakarta.json.*;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.*;
 import org.eclipse.microprofile.config.inject.*;
 import org.eclipse.microprofile.rest.client.inject.*;
@@ -23,9 +24,9 @@ public class OpenIdConnectView implements Serializable
 {
   @RestClient
   private IamServiceClient iamServiceClient;
-  @ConfigProperty(name = "keycloak.issuer-uri")
+  @ConfigProperty(name = "fe.quarkus.oidc.auth-server-url")
   String issuerUrl;
-  @ConfigProperty(name="keycloak.redirect-uri")
+  @ConfigProperty(name="keycloak.redirect-uri", defaultValue = "http://localhost:8080")
   String redirectUri;
   private String metaData = null;
   private String clientId;
@@ -54,7 +55,22 @@ public class OpenIdConnectView implements Serializable
     return metaData != null;
   }
 
-  public void getDiscoveryMetadata()
+  public void loadDiscovery()
+  {
+    try (Client client = ClientBuilder.newClient())
+    {
+      WebTarget target = client.target(issuerUrl + "/.well-known/openid-configuration");
+      Response response = target.request(MediaType.APPLICATION_JSON).get();
+      JsonObject jsonObject = response.readEntity(JsonObject.class);
+      issuerUrl = jsonObject.getString("issuer");
+      authorizationEndpoint = jsonObject.getString("authorization_endpoint");
+      tokenEndpoint = jsonObject.getString("token_endpoint");
+      userInfoEndpoint = jsonObject.getString("userinfo_endpoint");
+      metaData = String.format("issuer: %s%nauthorization_endpoint: %s%ntoken_endpoint: %s%nuserinfo_endpoint: %s", issuerUrl, authorizationEndpoint, tokenEndpoint, userInfoEndpoint);
+    }
+  }
+
+  /*public void getDiscoveryMetadata()
   {
     System.out.println ("### getDiscoveryMetadata(): issuerUrl " + issuerUrl);
     final String fmt = "issuer: %s%nauthorization_endpoint: %s%ntoken_endpoint: %s%nuserinfo_endpoint: %s";
@@ -69,7 +85,7 @@ public class OpenIdConnectView implements Serializable
     tokenEndpoint = jsonObject.getString("token_endpoint");
     userInfoEndpoint = jsonObject.getString("userinfo_endpoint");
     metaData = String.format(fmt, jsonObject.getString("issuer"), authorizationEndpoint, tokenEndpoint, userInfoEndpoint);
-  }
+  }*/
 
   public void authorizationRequest()
   {
