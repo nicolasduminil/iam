@@ -14,58 +14,6 @@
     <finalName>${project.artifactId}</finalName>
     <plugins>
       <plugin>
-        <groupId>com.dkanejs.maven.plugins</groupId>
-        <artifactId>docker-compose-maven-plugin</artifactId>
-        <inherited>false</inherited>
-        <executions>
-          <execution>
-            <id>run-keycloak</id>
-            <phase>pre-integration-test
-            </phase>
-            <goals>
-              <goal>up</goal>
-            </goals>
-            <configuration>
-              <composeFile>${project.basedir}/src/main/resources/docker-compose.yaml</composeFile>
-              <detachedMode>true</detachedMode>
-              <awaitTimeout>60</awaitTimeout>
-              <services>
-                <service>keycloak</service>
-              </services>
-            </configuration>
-          </execution>
-          <execution>
-            <id>run-quarkus</id>
-            <phase>integration-test
-            </phase>
-            <goals>
-              <goal>up</goal>
-            </goals>
-            <configuration>
-              <composeFile>${project.basedir}/src/main/resources/docker-compose.yaml</composeFile>
-              <detachedMode>true</detachedMode>
-              <awaitTimeout>60</awaitTimeout>
-              <services>
-                <service>iam-backend</service>
-                <service>iam-frontend</service>
-              </services>
-            </configuration>
-          </execution>
-          <execution>
-            <id>down</id>
-            <phase>clean</phase>
-            <goals>
-              <goal>down</goal>
-            </goals>
-            <configuration>
-              <composeFile>${project.basedir}/src/main/resources/docker-compose.yaml</composeFile>
-              <removeVolumes>true</removeVolumes>
-              <removeOrphans>true</removeOrphans>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <executions>

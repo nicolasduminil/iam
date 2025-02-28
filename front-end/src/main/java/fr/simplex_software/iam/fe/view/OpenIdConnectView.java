@@ -8,9 +8,12 @@ import jakarta.faces.context.*;
 import jakarta.faces.view.*;
 import jakarta.inject.*;
 import jakarta.json.*;
+import jakarta.json.bind.*;
+import jakarta.servlet.http.*;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.*;
+import org.apache.commons.lang3.*;
 import org.eclipse.microprofile.config.inject.*;
 import org.eclipse.microprofile.rest.client.inject.*;
 import org.primefaces.*;
@@ -24,95 +27,25 @@ public class OpenIdConnectView implements Serializable
 {
   @RestClient
   private IamServiceClient iamServiceClient;
-  @ConfigProperty(name = "fe.quarkus.oidc.auth-server-url")
-  String issuerUrl;
-  @ConfigProperty(name="keycloak.redirect-uri", defaultValue = "http://localhost:8080")
-  String redirectUri;
-  private String metaData = null;
-  private String clientId;
+  @Inject
+  private FacesContext facesContext;
+  @ConfigProperty(name = "quarkus.oidc.auth-server-url")
+  String issuer;
+  @ConfigProperty(name = "quarkus.oidc.client-id")
+  String clientId;
   private String scope;
-  private String header;
-  private String payload;
-  private String signature;
-  private String encoded;
-  private String authorizationEndpoint;
-  private String tokenEndpoint;
-  private String userInfoEndpoint;
-  private String script;
+  private String prompt;
+  private String maxAge;
+  private String loginHint;
+  private String code;
+  private String discoveryJson;
+  private String idToken;
 
-  public String getIssuerUrl()
-  {
-    return issuerUrl;
-  }
-
-  public void setIssuerUrl(String issuerUrl)
-  {
-    this.issuerUrl = issuerUrl;
-  }
-
-  public boolean isMetadata()
-  {
-    return metaData != null;
-  }
-
-  public void loadDiscovery()
-  {
-    try (Client client = ClientBuilder.newClient())
-    {
-      WebTarget target = client.target(issuerUrl + "/.well-known/openid-configuration");
-      Response response = target.request(MediaType.APPLICATION_JSON).get();
-      JsonObject jsonObject = response.readEntity(JsonObject.class);
-      issuerUrl = jsonObject.getString("issuer");
-      authorizationEndpoint = jsonObject.getString("authorization_endpoint");
-      tokenEndpoint = jsonObject.getString("token_endpoint");
-      userInfoEndpoint = jsonObject.getString("userinfo_endpoint");
-      metaData = String.format("issuer: %s%nauthorization_endpoint: %s%ntoken_endpoint: %s%nuserinfo_endpoint: %s", issuerUrl, authorizationEndpoint, tokenEndpoint, userInfoEndpoint);
-    }
-  }
-
-  /*public void getDiscoveryMetadata()
-  {
-    System.out.println ("### getDiscoveryMetadata(): issuerUrl " + issuerUrl);
-    final String fmt = "issuer: %s%nauthorization_endpoint: %s%ntoken_endpoint: %s%nuserinfo_endpoint: %s";
-    Response r = iamServiceClient.loadDiscoveryMetadata(issuerUrl);
-    System.out.println ("### getDiscoveryMetadata(): returned from iamServiceClient");
-    r.readEntity(String.class);
-    System.out.println ("### getDiscoveryMetadata(): readEntity OK");
-    JsonObject jsonObject =
-      Json.createReader(new StringReader(iamServiceClient.loadDiscoveryMetadata(issuerUrl).readEntity(String.class))).readObject();
-    System.out.println ("### getDiscoveryMetadata(): returned from backend");
-    authorizationEndpoint = jsonObject.getString("authorization_endpoint");
-    tokenEndpoint = jsonObject.getString("token_endpoint");
-    userInfoEndpoint = jsonObject.getString("userinfo_endpoint");
-    metaData = String.format(fmt, jsonObject.getString("issuer"), authorizationEndpoint, tokenEndpoint, userInfoEndpoint);
-  }*/
-
-  public void authorizationRequest()
-  {
-    System.out.println ("### OpenIdConnectView.authorizationRequest(): authorizationEndpoint " + authorizationEndpoint + " " + clientId);
-    Response response = iamServiceClient.sendAuthorizationRequest(new AuthorizationRequest(clientId, "code", scope, redirectUri, authorizationEndpoint));
-    System.out.println ("### OpenIdConnectView.authorizationRequest(): Have called iam service");
-    if (response.getStatus() != 200)
-    {
-      System.out.println ("### OpenIdConnectView.authorizationRequest(): throwing WebApplicationException with " + response.getStatus());
-    }
-    else
-      System.out.println ("### OpenIdConnectView.authorizationRequest(): no exception thrown " + response.getStatus());
-    String readEntity = response.readEntity(String.class);
-    System.out.println ("### OpenIdConnectView.authorizationRequest(): readEnity " + readEntity);
-    JsonObject jsonObject = Json.createReader(new StringReader(readEntity)).readObject();
-    System.out.println ("### OpenIdConnectView.authorizationRequest(): jsonObject " + jsonObject.getString("access_token"));
-    String accessToken[] = jsonObject.getString("access_token").split(".");
-    header = accessToken[0];
-    payload = accessToken[1];
-    signature = accessToken[2];
-    //FacesContext.getCurrentInstance()
-  }
-
-  public String getMetaData()
-  {
-    return metaData;
-  }
+  private String accessToken;
+  private String refreshToken;
+  private Map<String, Object> discovery;
+  private String authenticationRequest;
+  private String metaData = null;
 
   public String getClientId()
   {
@@ -122,6 +55,16 @@ public class OpenIdConnectView implements Serializable
   public void setClientId(String clientId)
   {
     this.clientId = clientId;
+  }
+
+  public String getIssuer()
+  {
+    return issuer;
+  }
+
+  public void setIssuer(String issuer)
+  {
+    this.issuer = issuer;
   }
 
   public String getScope()
@@ -134,83 +77,210 @@ public class OpenIdConnectView implements Serializable
     this.scope = scope;
   }
 
-  public String getHeader()
+  public String getPrompt()
   {
-    return header;
+    return prompt;
   }
 
-  public void setHeader(String header)
+  public void setPrompt(String prompt)
   {
-    this.header = header;
+    this.prompt = prompt;
   }
 
-  public String getPayload()
+  public String getMaxAge()
   {
-    return payload;
+    return maxAge;
   }
 
-  public void setPayload(String payload)
+  public void setMaxAge(String maxAge)
   {
-    this.payload = payload;
+    this.maxAge = maxAge;
   }
 
-  public String getSignature()
+  public String getLoginHint()
   {
-    return signature;
+    return loginHint;
   }
 
-  public void setSignature(String signature)
+  public void setLoginHint(String loginHint)
   {
-    this.signature = signature;
+    this.loginHint = loginHint;
   }
 
-  public String getEncoded()
+  public String getCode()
   {
-    return encoded;
+    return code;
   }
 
-  public void setEncoded(String encoded)
+  public void setCode(String code)
   {
-    this.encoded = encoded;
+    this.code = code;
   }
 
-  public String getAuthorizationEndpoint()
+  public String getDiscoveryJson()
   {
-    return authorizationEndpoint;
+    return discoveryJson;
   }
 
-  public void setAuthorizationEndpoint(String authorizationEndpoint)
+  public void setDiscoveryJson(String discoveryJson)
   {
-    this.authorizationEndpoint = authorizationEndpoint;
+    this.discoveryJson = discoveryJson;
   }
 
-  public String getScript()
+  public String getIdToken()
   {
-    return script;
+    return idToken;
   }
 
-  public void setScript(String script)
+  public void setIdToken(String idToken)
   {
-    this.script = script;
+    this.idToken = idToken;
   }
 
-  public String getTokenEndpoint()
+  public String getAccessToken()
   {
-    return tokenEndpoint;
+    return accessToken;
   }
 
-  public void setTokenEndpoint(String tokenEndpoint)
+  public void setAccessToken(String accessToken)
   {
-    this.tokenEndpoint = tokenEndpoint;
+    this.accessToken = accessToken;
   }
 
-  public String getUserInfoEndpoint()
+  public String getRefreshToken()
   {
-    return userInfoEndpoint;
+    return refreshToken;
   }
 
-  public void setUserInfoEndpoint(String userInfoEndpoint)
+  public void setRefreshToken(String refreshToken)
   {
-    this.userInfoEndpoint = userInfoEndpoint;
+    this.refreshToken = refreshToken;
+  }
+
+  public Map<String, Object> getDiscovery()
+  {
+    return discovery;
+  }
+
+  public void setDiscovery(Map<String, Object> discovery)
+  {
+    this.discovery = discovery;
+  }
+
+  public String getAuthenticationRequest()
+  {
+    return authenticationRequest;
+  }
+
+  public void setAuthenticationRequest(String authenticationRequest)
+  {
+    this.authenticationRequest = authenticationRequest;
+  }
+
+  public boolean isMetadata()
+  {
+    return metaData != null;
+  }
+
+  public void loadDiscovery()
+  {
+    try (Client client = ClientBuilder.newClient())
+    {
+      WebTarget target = client.target(issuer + "/.well-known/openid-configuration");
+      discovery = target.request(MediaType.APPLICATION_JSON).get(Map.class);
+      discoveryJson = JsonbBuilder.create().toJson(discovery);
+    }
+    catch (Exception e)
+    {
+      FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+        "Error loading discovery document", e.getMessage());
+      facesContext.addMessage(null, message);
+    }
+  }
+
+  public String generateAuthenticationRequest()
+  {
+    if (discovery == null || discovery.isEmpty())
+    {
+      FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+        "Discovery document not loaded", null);
+      facesContext.addMessage(null, message);
+      return null;
+    }
+
+    String authEndpoint = (String) discovery.get("authorization_endpoint");
+    String redirectUri = getRedirectUri();
+
+    UriBuilder builder = UriBuilder.fromUri(authEndpoint)
+      .queryParam("client_id", clientId)
+      .queryParam("response_type", "code")
+      .queryParam("redirect_uri", redirectUri);
+
+    if (StringUtils.isNotBlank(scope))
+    {
+      builder.queryParam("scope", scope);
+    }
+    if (StringUtils.isNotBlank(prompt))
+    {
+      builder.queryParam("prompt", prompt);
+    }
+    if (StringUtils.isNotBlank(maxAge))
+    {
+      builder.queryParam("max_age", maxAge);
+    }
+    if (StringUtils.isNotBlank(loginHint))
+    {
+      builder.queryParam("login_hint", loginHint);
+    }
+
+    return builder.build().toString();
+  }
+
+  public void handleCallback()
+  {
+    Map<String, String> params = facesContext.getExternalContext()
+      .getRequestParameterMap();
+    code = params.get("code");
+    if (code != null)
+    {
+      exchangeCodeForTokens();
+    }
+  }
+
+  private void exchangeCodeForTokens()
+  {
+    Client client = ClientBuilder.newClient();
+    Form form = new Form()
+      .param("grant_type", "authorization_code")
+      .param("code", code)
+      .param("client_id", clientId)
+      .param("redirect_uri", getRedirectUri());
+
+    try
+    {
+      String tokenEndpoint = (String) discovery.get("token_endpoint");
+      Response response = client.target(tokenEndpoint)
+        .request(MediaType.APPLICATION_JSON)
+        .post(Entity.form(form));
+
+      Map<String, Object> tokens = response.readEntity(Map.class);
+      refreshToken = (String) tokens.get("refresh_token");
+      idToken = (String) tokens.get("id_token");
+      accessToken = (String) tokens.get("access_token");
+    }
+    catch (Exception e)
+    {
+      FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+        "Error exchanging code for tokens", e.getMessage());
+      facesContext.addMessage(null, message);
+    }
+  }
+
+  private String getRedirectUri()
+  {
+    HttpServletRequest request = (HttpServletRequest) facesContext
+      .getExternalContext().getRequest();
+    String uri = request.getRequestURL().toString();
+    return uri.substring(0, uri.lastIndexOf("/"));
   }
 }

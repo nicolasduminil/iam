@@ -8,8 +8,8 @@ services:
       - "8080:8080"
       - "9990:9990"
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
       KC_HEALTH_ENABLED: "true"
     volumes:
       - ./scripts/customize.sh:/opt/keycloak/customization/customize.sh
@@ -22,6 +22,7 @@ services:
       timeout: 2s
       retries: 15
     command: ["start-dev"]
+    network_mode: "host"
   iam-backend:
     image: nicolasduminil/iam-back-end:1.0-SNAPSHOT
     depends_on:
@@ -30,6 +31,7 @@ services:
     hostname: iam-backend
     ports:
       - "8081:8081"
+    network_mode: "host"
   iam-frontend:
     image: nicolasduminil/iam-front-end:1.0-SNAPSHOT
     depends_on:
@@ -38,5 +40,6 @@ services:
     hostname: iam-frontend
     ports:
       - "8082:8082"
+    network_mode: "host"
 
 

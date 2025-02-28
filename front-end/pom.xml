@@ -39,19 +39,14 @@
       <groupId>io.quarkiverse.primefaces</groupId>
       <artifactId>quarkus-primefaces-extensions</artifactId>
     </dependency>
-    <!--dependency>
+    <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-oidc</artifactId>
-    </dependency-->
+    </dependency>
     <dependency>
       <groupId>fr.simplex-software</groupId>
       <artifactId>common</artifactId>
     </dependency>
-    <!--dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
-      <version>4.5</version>
-    </dependency-->
   </dependencies>
   <build>
     <finalName>${project.artifactId}</finalName>
