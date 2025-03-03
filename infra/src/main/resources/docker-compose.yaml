@@ -4,9 +4,9 @@ services:
     image: quay.io/keycloak/keycloak
     hostname: keycloak
     container_name: keycloak
-    ports:
-      - "8080:8080"
-      - "9990:9990"
+    #ports:
+    #  - "8080:8080"
+    #  - "9990:9990"
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
@@ -29,8 +29,8 @@ services:
       - keycloak
     container_name: iam-backend
     hostname: iam-backend
-    ports:
-      - "8081:8081"
+    #ports:
+    #  - "8081:8081"
     network_mode: "host"
   iam-frontend:
     image: nicolasduminil/iam-front-end:1.0-SNAPSHOT
@@ -38,8 +38,8 @@ services:
       - iam-backend
     container_name: iam-frontend
     hostname: iam-frontend
-    ports:
-      - "8082:8082"
+    #ports:
+    #  - "8082:8082"
     network_mode: "host"
 
 

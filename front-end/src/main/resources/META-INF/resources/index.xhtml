@@ -7,51 +7,61 @@
   <h:head>
   </h:head>
   <h:body>
-    <div class="card">
-      <h3>OpenID Connect Sandbox</h3>
-      <p:tabView>
-        <p:tab title="Discovery">
-          <h4>Issuer URI</h4>
-          <p:row>
-            <p:column>
-              <p:inputText id="issuer-uri" styleClass="block" value="#{openIdConnectView.issuer}"
-                           style="display:block;width: 430px"/>
-              <p:watermark for="issuer-uri" value="#{openIdConnectView.issuer}"/>
-              <small class="block ui-state-error">Type the issuer URI or accept the default</small>
-            </p:column>
-          </p:row>
-          <h4></h4>
-          <p:row>
-            <p:column>
-              <h4>Metadata</h4>
-            </p:column>
-          </p:row>
-          <p:row>
-            <p:column style="background-color: lightcoral" rendered="#{openIdConnectView.loadDiscovery}">
-              <p:scrollPanel style="width:1000px;height:20" id="metadata" header="Metadata" footer="Metadata Details"
-                             rendered="#{openIdConnectView.loadDiscovery}">
-                <h:outputText value="#{openIdConnectView.loadDiscovery}"/>
-              </p:scrollPanel>
-            </p:column>
-          </p:row>
-          <p:row>
-            <p:column styleClass="ui-grid-col-12">
-              <p:commandButton value="Discover" styleClass="mr-2" style="width: auto"
-                               action="#{openIdConnectView.loadDiscovery}">
-                <f:ajax execute="@form" render="discoveryOutput"/>
-              </p:commandButton>
-            </p:column>
-          </p:row>
-          <p:row id="discoveryOutput">
-            <h:outputText value="Discovery Document:"
-                          rendered="#{not empty openIdConnectView.discoveryJson}"/>
-            <pre>
-                <h:outputText value="#{openIdConnectView.discoveryJson}"/>
-            </pre>
-          </p:row>
-        </p:tab>
-      </p:tabView>
-    </div>
+    <h:form id="form">
+      <p:growl id="msgs" showDetail="true" skipDetailIfEqualsSummary="true"/>
+      <div class="card">
+        <h5>OpenID Connect Sandbox</h5>
+        <p:tabView>
+          <p:ajax event="tabChange" listener="#{openIdConnectView.onTabChange}" update=":form:msgs"/>
+          <p:ajax event="tabClose" listener="#{openIdConnectView.onTabClose}" update=":form:msgs"/>
+          <p:tab title="Discovery">
+            <h:panelGrid columns="1" cellpadding="7" styleClass="mb-3">
+              <p:outputLabel for="issuer-uri" value="Issuer URI:"/>
+              <p:inputText id="issuer-uri" size="40" maxlength="255"
+                value="#{openIdConnectView.issuer}" required="true"
+                label="issuer-uri">
+                <f:validateLength minimum="30"/>
+              </p:inputText>
+              <p:message for="issuer-uri" display="icon"/>
+            </h:panelGrid>
+            <p:commandButton value="#{empty openIdConnectView.discoveryJson ? 'Discover' : (openIdConnectView.showDiscoveryJson ? 'Hide Details' : 'Show Details')}"
+              update="@form :form:msgs" process="@this issuer-uri"
+              action="#{openIdConnectView.loadDiscovery}"
+              onclick="console.log('Button clicked');"
+              oncomplete="console.log('Request completed');"
+              icon="#{empty openIdConnectView.discoveryJson ? 'pi pi-check' : (openIdConnectView.showDiscoveryJson ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
+            <p:commandButton value="Test" action="#{openIdConnectView.testAction()}"/>
+            <div style="height: 10px;"></div>
+            <p:outputPanel id="introspection-details-panel" style="max-height: 20em; max-width: 60em; overflow: auto;">
+              <h:outputLabel for="introspection-details" value="Introspection details: "
+                             rendered="#{not empty openIdConnectView.discoveryJson and openIdConnectView.showDiscoveryJson}"/>
+              <div style="height: 10px;"></div>
+              <p:inputTextarea id="introspection-details" value="#{openIdConnectView.discoveryJson}"
+                               readonly="true" autoResize="false" rows="10" cols="30"
+                               style="width: 100%; height: 100%; border: 1px solid #ccc;"
+                               rendered="#{not empty openIdConnectView.discoveryJson and openIdConnectView.showDiscoveryJson}"/>
+            </p:outputPanel>
+          </p:tab>
+          <p:tab title="Authentication Request">
+            <h:panelGrid columns="1" cellpadding="7" styleClass="mb-3">
+              <p:commandButton value="#{empty openIdConnectView.authenticationRequest ? 'Generate' : (openIdConnectView.showAuthenticationRequest ? 'Hide Request' : 'Show Request')}"
+                               update="@form" action="#{openIdConnectView.generateAuthenticationRequest}"
+                               icon="#{empty openIdConnectView.authenticationRequest ? 'pi pi-check' : (openIdConnectView.showAuthenticationRequest ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
+              <div style="height: 10px;"></div>
+              <p:outputPanel id="authentication-request-panel" style="max-height: 20em; max-width: 60em; overflow: auto;">
+                <h:outputLabel for="authentication-request" value="Authentication reaquest: "
+                               rendered="#{not empty openIdConnectView.authenticationRequest and openIdConnectView.showAuthenticationRequest}"/>
+                <div style="height: 10px;"></div>
+                <p:inputTextarea id="authentication-request" value="#{openIdConnectView.authenticationRequest}"
+                                 readonly="true" autoResize="false" rows="10" cols="30"
+                                 style="width: 100%; height: 100%; border: 1px solid #ccc;"
+                                 rendered="#{not empty openIdConnectView.authenticationRequest and openIdConnectView.showAuthenticationRequest}"/>
+              </p:outputPanel>
+            </h:panelGrid>
+          </p:tab>
+        </p:tabView>
+      </div>
+    </h:form>
   </h:body>
 </f:view>
 </html>

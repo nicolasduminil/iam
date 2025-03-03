@@ -28,6 +28,23 @@
               <workingDirectory>${project.basedir}</workingDirectory>
             </configuration>
           </execution>
+          <execution>
+            <phase>clean</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>docker-compose</executable>
+              <workingDirectory>${project.basedir}</workingDirectory>
+              <arguments>
+                <argument>-f</argument>
+                <argument>${project.basedir}/src/main/resources/docker-compose.yaml</argument>
+                <argument>down</argument>
+                <argument>-v</argument>
+                <argument>--remove-orphans</argument>
+              </arguments>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
     </plugins>
