@@ -68,6 +68,21 @@ public class OpenIdConnectView implements Serializable
     return authenticationRequest;
   }
 
+  public void setIssuer(String issuer)
+  {
+    this.issuer = issuer;
+  }
+
+  public void setAuthenticationRequest(String authenticationRequest)
+  {
+    this.authenticationRequest = authenticationRequest;
+  }
+
+  public void setDiscoveryJson(String discoveryJson)
+  {
+    this.discoveryJson = discoveryJson;
+  }
+
   public void loadDiscovery()
   {
     System.out.println ("### Entry loadDiscovery(): discoveryJson is "  + (StringUtils.isEmpty(discoveryJson) ? "empty" : "not empty" + " and showDiscoveryJson is " + showDiscoveryJson));
