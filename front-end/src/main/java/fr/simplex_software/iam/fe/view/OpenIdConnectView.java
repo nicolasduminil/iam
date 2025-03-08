@@ -1,22 +1,24 @@
 package fr.simplex_software.iam.fe.view;
 
 import fr.simplex_software.iam.fe.service.*;
+import io.quarkus.keycloak.admin.client.common.*;
 import io.quarkus.runtime.annotations.*;
-import jakarta.enterprise.context.*;
 import jakarta.faces.application.*;
 import jakarta.faces.context.*;
 import jakarta.faces.view.*;
 import jakarta.inject.*;
 import jakarta.json.bind.*;
-import jakarta.servlet.http.*;
 import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.*;
 import org.apache.commons.lang3.*;
 import org.eclipse.microprofile.config.inject.*;
 import org.eclipse.microprofile.rest.client.inject.*;
+import org.keycloak.admin.client.*;
 import org.primefaces.event.*;
 
 import java.io.*;
+import java.net.*;
+import java.nio.charset.*;
 import java.util.*;
 
 @Named
@@ -24,23 +26,52 @@ import java.util.*;
 @RegisterForReflection(serialization = true)
 public class OpenIdConnectView implements Serializable
 {
+  @Inject
+  Keycloak keycloak;
+  @Inject
+  KeycloakAdminClientConfig keycloakAdminClientConfig;
   @RestClient
   private IamServiceClient iamServiceClient;
   @Inject
   FacesContext facesContext;
+  @Inject
+  OidcService oidcService;
   @ConfigProperty(name = "quarkus.oidc.auth-server-url")
   String issuer;
+  @ConfigProperty(name = "quarkus.discovery.endpoint")
+  String discoveryEndpoint;
   @ConfigProperty(name = "quarkus.oidc.client-id")
   String clientId;
+  @ConfigProperty(name = "quarkus.oidc.credentials.client-secret.value")
+  String secret;
+  @ConfigProperty(name = "keycloak.realm")
+  String realm;
   private Map<String, Object> discovery;
   private String discoveryJson;
   private boolean showDiscoveryJson;
   private String authenticationRequest;
   private boolean showAuthenticationRequest;
+  private String scope = "openid";
+  private String prompt;
+  private String maxAge;
+  private String loginHint;
+  private String formattedAuthRequest;
+  private Client client = ClientBuilder.newClient();
+  private String authenticationRequestOutput;
+  private String authCode = "code";
+  private String accessToken;
+  private String idToken;
+  private String refreshToken;
+  private String redirectUri;
 
   public String getClientId()
   {
     return clientId;
+  }
+
+  public void setClientId(String clientId)
+  {
+    this.clientId = clientId;
   }
 
   public boolean isShowDiscoveryJson()
@@ -83,36 +114,133 @@ public class OpenIdConnectView implements Serializable
     this.discoveryJson = discoveryJson;
   }
 
+  public String getScope()
+  {
+    return scope;
+  }
+
+  public void setScope(String scope)
+  {
+    this.scope = scope;
+  }
+
+  public String getPrompt()
+  {
+    return prompt;
+  }
+
+  public void setPrompt(String prompt)
+  {
+    this.prompt = prompt;
+  }
+
+  public String getMaxAge()
+  {
+    return maxAge;
+  }
+
+  public void setMaxAge(String maxAge)
+  {
+    this.maxAge = maxAge;
+  }
+
+  public String getLoginHint()
+  {
+    return loginHint;
+  }
+
+  public void setLoginHint(String loginHint)
+  {
+    this.loginHint = loginHint;
+  }
+
+  public String getFormattedAuthRequest()
+  {
+    return formattedAuthRequest;
+  }
+
+  public void setFormattedAuthRequest(String formattedAuthRequest)
+  {
+    this.formattedAuthRequest = formattedAuthRequest;
+  }
+
+  public String getAuthenticationRequestOutput()
+  {
+    return authenticationRequestOutput;
+  }
+
+  public void setAuthenticationRequestOutput(String authenticationRequestOutput)
+  {
+    this.authenticationRequestOutput = authenticationRequestOutput;
+  }
+
+  public String getAuthCode()
+  {
+    return authCode;
+  }
+
+  public void setAuthCode(String authCode)
+  {
+    this.authCode = authCode;
+  }
+
+  public String getAccessToken()
+  {
+    return accessToken;
+  }
+
+  public void setAccessToken(String accessToken)
+  {
+    this.accessToken = accessToken;
+  }
+
+  public String getIdToken()
+  {
+    return idToken;
+  }
+
+  public void setIdToken(String idToken)
+  {
+    this.idToken = idToken;
+  }
+
+  public String getRefreshToken()
+  {
+    return refreshToken;
+  }
+
+  public void setRefreshToken(String refreshToken)
+  {
+    this.refreshToken = refreshToken;
+  }
+
+  public String getSecret()
+  {
+    return secret;
+  }
+
+  public void setSecret(String secret)
+  {
+    this.secret = secret;
+  }
+
   public void loadDiscovery()
   {
-    System.out.println ("### Entry loadDiscovery(): discoveryJson is "  + (StringUtils.isEmpty(discoveryJson) ? "empty" : "not empty" + " and showDiscoveryJson is " + showDiscoveryJson));
     if (StringUtils.isEmpty(discoveryJson))
-      try (Client client = ClientBuilder.newClient())
-      {
-        WebTarget target = client.target(issuer + "/.well-known/openid-configuration");
-        discovery = target.request(MediaType.APPLICATION_JSON).get(Map.class);
-        discoveryJson = JsonbBuilder.create(new JsonbConfig()
+    {
+      discovery = client.target(issuer + discoveryEndpoint)
+        .request(MediaType.APPLICATION_JSON).get(Map.class);
+      discoveryJson = JsonbBuilder.create(new JsonbConfig()
           .withFormatting(true))
-          .toJson(discovery);
-        showDiscoveryJson = true;
-      }
-      catch (Exception e)
-      {
-        FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-          "Error loading discovery document", e.getMessage());
-        facesContext.addMessage(null, message);
-        showDiscoveryJson = false;
-      }
+        .toJson(discovery);
+      showDiscoveryJson = true;
+    }
     else
       showDiscoveryJson = !showDiscoveryJson;
-    System.out.println ("### Exit loadDiscovery(): discoveryJson is "  + (StringUtils.isEmpty(discoveryJson) ? "empty" : "not empty" + " and showDiscoveryJson is " + showDiscoveryJson));
   }
 
   public void generateAuthenticationRequest()
   {
-    System.out.println(">>> Entry generateAuthenticationRequest(): discovery is " + (discovery == null || discovery.isEmpty() ? "empty" : "not empty")
-      + " authenticationRequest is " + (StringUtils.isEmpty(authenticationRequest) ? "empty" : "not empty")
-      + " showAuthenticationRequest is " + showAuthenticationRequest);
     if (discovery == null || discovery.isEmpty())
     {
       FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
@@ -125,37 +253,45 @@ public class OpenIdConnectView implements Serializable
       if (StringUtils.isEmpty(authenticationRequest))
       {
         String authEndpoint = (String) discovery.get("authorization_endpoint");
-        String redirectUri = getRedirectUri();
+        redirectUri = getRedirectUri();
+        System.out.println (">>> generateAuthenticationRequest(): We got the auth_endpoint: " + authEndpoint + " and redirect_uri " + redirectUri);
         UriBuilder builder = UriBuilder.fromUri(authEndpoint)
           .queryParam("client_id", clientId)
+          .queryParam("secret", secret)
+          .queryParam("redirect_uri", redirectUri)
           .queryParam("response_type", "code")
-          .queryParam("redirect_uri", redirectUri);
-        authenticationRequest = builder.build().toString();
+          .queryParam("scope", scope);
+        URI authUri = builder.build();
+        authenticationRequest = authUri.toString();
+        formattedAuthRequest = formatAuthRequest(authUri);
         showAuthenticationRequest = true;
       }
       else
         showAuthenticationRequest = !showAuthenticationRequest;
     }
-    System.out.println(">>> Exit generateAuthenticationRequest(): discovery is " + (discovery == null || discovery.isEmpty() ? "empty" : "not empty")
-      + " authenticationRequest is " + (StringUtils.isEmpty(authenticationRequest) ? "empty" : "not empty")
-      + " showAuthenticationRequest is " + showAuthenticationRequest);
   }
 
-  public void testAction()
+  public void sendAuthenticationRequest() throws IOException
   {
-    System.out.println ("########################################################");
-  }
-
-  /*public void handleCallback()
-  {
-    Map<String, String> params = facesContext.getExternalContext()
-      .getRequestParameterMap();
-    code = params.get("code");
-    if (code != null)
+    System.out.println(">>> sendAuthenticationRequest(): Sending " + authenticationRequest);
+    /*if (StringUtils.isEmpty(authenticationRequest))
     {
-      exchangeCodeForTokens();
+      FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+        "Authentication request not generated", null);
+      facesContext.addMessage(null, message);
     }
-  }*/
+    else
+    {
+      oidcService.setAuthCode(authCode);
+      oidcService.setClientId(clientId);
+      oidcService.setScope(scope);
+      oidcService.setRedirectUri(redirectUri);
+      oidcService.setDiscovery(discovery);
+      oidcService.setSecret(secret);
+      ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
+      externalContext.redirect(authenticationRequest);
+    }*/
+  }
 
   public void onTabChange(TabChangeEvent event)
   {
@@ -169,39 +305,58 @@ public class OpenIdConnectView implements Serializable
     FacesContext.getCurrentInstance().addMessage(null, msg);
   }
 
-  /*private void exchangeCodeForTokens()
+  public void exchangeCodeForTokens()
   {
-    Client client = ClientBuilder.newClient();
-    Form form = new Form()
-      .param("grant_type", "authorization_code")
-      .param("code", code)
-      .param("client_id", clientId)
-      .param("redirect_uri", getRedirectUri());
-
-    try
+    if (authCode != null)
     {
+      Form form = new Form()
+        .param("grant_type", "authorization_code")
+        .param("code", authCode)
+        .param("client_id", clientId)
+        .param("secret", scope)
+        .param("redirect_uri", getRedirectUri());
       String tokenEndpoint = (String) discovery.get("token_endpoint");
+      System.out.println(">>> exchangeCodeForTokens(): We got the token_endpoint: " + tokenEndpoint);
       Response response = client.target(tokenEndpoint)
         .request(MediaType.APPLICATION_JSON)
         .post(Entity.form(form));
-
-      Map<String, Object> tokens = response.readEntity(Map.class);
-      refreshToken = (String) tokens.get("refresh_token");
+      //Map<String, Object> tokens = response.readEntity(Map.class);
+      String tokens = response.readEntity(String.class);
+      System.out.println(">>> exchangeCodeForTokens(): We got the tokens: " + tokens);
+      /*refreshToken = (String) tokens.get("refresh_token");
       idToken = (String) tokens.get("id_token");
       accessToken = (String) tokens.get("access_token");
-    } catch (Exception e)
-    {
-      FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-        "Error exchanging code for tokens", e.getMessage());
-      facesContext.addMessage(null, message);
+      System.out.println(">>> exchangeCodeForTokens(): We got the access_token: " + accessToken +
+        " the refresh token " + refreshToken + " and the id token " + idToken);*/
     }
-  }*/
+  }
 
   private String getRedirectUri()
   {
-    HttpServletRequest request = (HttpServletRequest) facesContext
-      .getExternalContext().getRequest();
-    String uri = request.getRequestURL().toString();
-    return uri.substring(0, uri.lastIndexOf("/"));
+    String uri = keycloak.realm(realm).clients().findByClientId(clientId).getFirst().getRedirectUris().getFirst();
+    System.out.println(">>> getRedirectUri(): We got the uri: " + uri);
+    return uri;
+  }
+
+  private String formatAuthRequest(URI authRequest)
+  {
+    StringBuilder formattedAuthRequest = new StringBuilder();
+    formattedAuthRequest.append(authRequest.getScheme())
+      .append("://").append(authRequest.getHost());
+    if (authRequest.getPort() != -1)
+      formattedAuthRequest.append(":").append(authRequest.getPort());
+    formattedAuthRequest.append(authRequest.getPath()).append("\n");
+    String query = authRequest.getRawQuery();
+    if (query != null)
+    {
+      String[] params = query.split("&");
+      for (String param : params)
+      {
+        if (param.startsWith("redirect_uri"))
+          param = URLDecoder.decode(param, StandardCharsets.UTF_8);
+        formattedAuthRequest.append("  ").append(param).append("\n");
+      }
+    }
+    return formattedAuthRequest.toString();
   }
 }

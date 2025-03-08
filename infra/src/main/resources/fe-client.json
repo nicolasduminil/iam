@@ -10,7 +10,7 @@
   "implicitFlowEnabled" : false,
   "directAccessGrantsEnabled" : false,
   "serviceAccountsEnabled" : false,
-  "redirectUris" : [ "http://localhost:8082/*" ],
+  "redirectUris" : [ "http://localhost:8082/",  "http://localhost:8082/callback"],
   "webOrigins" : ["http://localhost:8082"],
   "rootUrl" : "http://localhost:8082",
   "defaultClientScopes": [
