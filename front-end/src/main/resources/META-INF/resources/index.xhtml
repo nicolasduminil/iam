@@ -11,7 +11,7 @@
       <p:growl id="msgs" showDetail="true" skipDetailIfEqualsSummary="true"/>
       <div class="card">
         <h1>OpenID Connect Sandbox</h1>
-        <p:tabView>
+        <p:tabView activeIndex="#{param.activeIndex}">
           <p:ajax event="tabChange" listener="#{openIdConnectView.onTabChange}" update=":form:msgs"/>
           <p:ajax event="tabClose" listener="#{openIdConnectView.onTabClose}" update=":form:msgs"/>
           <p:tab title="Discovery">
@@ -43,7 +43,7 @@
             </p:outputPanel>
           </p:tab>
           <p:tab title="Authentication">
-            <h:panelGrid columns="3" styleClass="mb-3">
+            <h:panelGrid id="auth-panelGrid" columns="3" styleClass="mb-3">
               <p:outputLabel for="client-id" value="Client ID:"/>
               <p:inputText id="client-id"
                            value="#{openIdConnectView.clientId}" required="true"
@@ -51,8 +51,9 @@
               <p:message for="client-id" display="icon"/>
               <p:outputLabel for="client-secret" value="Client secret:"/>
               <p:password id="client-secret"
-                           value="#{openIdConnectView.secret}" required="true"
-                           label="client-secret"/>
+                          value="#{openIdConnectView.secret}" required="true"
+                          redisplay="true"
+                          label="client-secret"/>
               <p:message for="client-secret" display="icon"/>
               <p:outputLabel for="scope" value="Scope:"/>
               <p:inputText id="scope"
@@ -76,7 +77,8 @@
               <p:message for="login-hint" display="icon"/>
               <p:commandButton
                 value="#{empty openIdConnectView.authenticationRequest ? 'Generate' : (openIdConnectView.showAuthenticationRequest ? 'Hide Request' : 'Show Request')}"
-                update="@form :form:msgs" action="#{openIdConnectView.generateAuthenticationRequest}"
+                update="auth-panelGrid :form:msgs" process="@this @parent"
+                action="#{openIdConnectView.generateAuthenticationRequest}"
                 icon="#{empty openIdConnectView.authenticationRequest ? 'pi pi-check' : (openIdConnectView.showAuthenticationRequest ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
               <div style="height: 10px;"></div>
               <p:outputPanel id="authentication-request-panel"
@@ -91,22 +93,36 @@
               </p:outputPanel>
               <p:commandButton value="Send Authentication Request"
                                rendered="#{not empty openIdConnectView.authenticationRequest and openIdConnectView.showAuthenticationRequest}"
+                               update="tokens-panelGrid" process="@this @parent"
                                action="#{openIdConnectView.sendAuthenticationRequest()}"
                                icon="#{empty openIdConnectView.authenticationRequest ? 'pi pi-check' : (openIdConnectView.showAuthenticationRequest ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
+            </h:panelGrid>
+            <h:panelGrid id="tokens-panelGrid" columns="3" styleClass="mb-3" rendered="#{not empty oidcService.authCode}">
+              <p:outputLabel for="auth-code" rendered="#{not empty oidcService.authCode}" value="Authorization code:"/>
+              <p:inputText id="auth-code" rendered="#{not empty oidcService.authCode}"
+                           value="#{oidcService.authCode}" required="true"
+                           size="100" label="auth-code"/>
+              <p:message for="auth-code" display="icon"/>
+              <p:outputLabel for="id-token" rendered="#{not empty oidcService.idToken}" value="ID token:"/>
+              <p:inputText id="id-token" rendered="#{not empty oidcService.idToken}"
+                           value="#{oidcService.idToken}" required="true"
+                           size="100" label="id-token"/>
+              <p:message for="id-token" display="icon"/>
+              <p:outputLabel for="access-token" rendered="#{not empty oidcService.accessToken}" value="Access token:"/>
+              <p:inputText id="access-token" rendered="#{not empty oidcService.accessToken}"
+                           value="#{oidcService.accessToken}" required="true"
+                           size="100" label="access-token"/>
+              <p:message for="access-token" display="icon"/>
+              <p:outputLabel for="refresh-token" rendered="#{not empty oidcService.refreshToken}"
+                             value="Refresh token:"/>
+              <p:inputText id="refresh-token"
+                           value="#{oidcService.refreshToken}" required="true"
+                           size="100" label="refresh-token"/>
+              <p:message for="refresh-token" display="icon"/>
             </h:panelGrid>
           </p:tab>
           <p:tab title="Token">
             <h5 style="margin-top:0">Token</h5>
-            <h:panelGrid columns="3" styleClass="mb-3">
-              <p:outputLabel for="auth-code" value="Authorization code:"/>
-              <p:inputText id="auth-code"
-                           value="#{openIdConnectView.authCode}" required="true"
-                           label="auth-code"/>
-              <p:message for="auth-code" display="icon"/>
-              <p:commandButton value="Send Token Request"
-                               action="#{openIdConnectView.exchangeCodeForTokens()}"
-                               icon="#{empty openIdConnectView.authenticationRequest ? 'pi pi-check' : (openIdConnectView.showAuthenticationRequest ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
-            </h:panelGrid>
           </p:tab>
         </p:tabView>
       </div>

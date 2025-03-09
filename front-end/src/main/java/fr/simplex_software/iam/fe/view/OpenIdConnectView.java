@@ -1,11 +1,10 @@
 package fr.simplex_software.iam.fe.view;
 
 import fr.simplex_software.iam.fe.service.*;
-import io.quarkus.keycloak.admin.client.common.*;
 import io.quarkus.runtime.annotations.*;
+import jakarta.enterprise.context.*;
 import jakarta.faces.application.*;
 import jakarta.faces.context.*;
-import jakarta.faces.view.*;
 import jakarta.inject.*;
 import jakarta.json.bind.*;
 import jakarta.ws.rs.client.*;
@@ -22,18 +21,14 @@ import java.nio.charset.*;
 import java.util.*;
 
 @Named
-@ViewScoped
+@SessionScoped
 @RegisterForReflection(serialization = true)
 public class OpenIdConnectView implements Serializable
 {
   @Inject
   Keycloak keycloak;
-  @Inject
-  KeycloakAdminClientConfig keycloakAdminClientConfig;
   @RestClient
   private IamServiceClient iamServiceClient;
-  @Inject
-  FacesContext facesContext;
   @Inject
   OidcService oidcService;
   @ConfigProperty(name = "quarkus.oidc.auth-server-url")
@@ -234,63 +229,40 @@ public class OpenIdConnectView implements Serializable
           .withFormatting(true))
         .toJson(discovery);
       showDiscoveryJson = true;
-    }
-    else
+    } else
       showDiscoveryJson = !showDiscoveryJson;
   }
 
   public void generateAuthenticationRequest()
   {
-    if (discovery == null || discovery.isEmpty())
+    if (StringUtils.isEmpty(authenticationRequest))
     {
-      FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-        "Discovery document not loaded", null);
-      facesContext.addMessage(null, message);
-      showAuthenticationRequest = false;
-    }
-    else
-    {
-      if (StringUtils.isEmpty(authenticationRequest))
-      {
-        String authEndpoint = (String) discovery.get("authorization_endpoint");
-        redirectUri = getRedirectUri();
-        System.out.println (">>> generateAuthenticationRequest(): We got the auth_endpoint: " + authEndpoint + " and redirect_uri " + redirectUri);
-        UriBuilder builder = UriBuilder.fromUri(authEndpoint)
-          .queryParam("client_id", clientId)
-          .queryParam("secret", secret)
-          .queryParam("redirect_uri", redirectUri)
-          .queryParam("response_type", "code")
-          .queryParam("scope", scope);
-        URI authUri = builder.build();
-        authenticationRequest = authUri.toString();
-        formattedAuthRequest = formatAuthRequest(authUri);
-        showAuthenticationRequest = true;
-      }
-      else
-        showAuthenticationRequest = !showAuthenticationRequest;
-    }
+      String authEndpoint = (String) discovery.get("authorization_endpoint");
+      redirectUri = getRedirectUri();
+      UriBuilder builder = UriBuilder.fromUri(authEndpoint)
+        .queryParam("client_id", clientId)
+        .queryParam("client_secret", secret)
+        .queryParam("redirect_uri", redirectUri)
+        .queryParam("response_type", "code")
+        .queryParam("scope", scope);
+      URI authUri = builder.build();
+      authenticationRequest = authUri.toString();
+      formattedAuthRequest = formatAuthRequest(authUri);
+      showAuthenticationRequest = true;
+    } else
+      showAuthenticationRequest = !showAuthenticationRequest;
   }
 
   public void sendAuthenticationRequest() throws IOException
   {
-    System.out.println(">>> sendAuthenticationRequest(): Sending " + authenticationRequest);
-    /*if (StringUtils.isEmpty(authenticationRequest))
-    {
-      FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-        "Authentication request not generated", null);
-      facesContext.addMessage(null, message);
-    }
-    else
-    {
-      oidcService.setAuthCode(authCode);
-      oidcService.setClientId(clientId);
-      oidcService.setScope(scope);
-      oidcService.setRedirectUri(redirectUri);
-      oidcService.setDiscovery(discovery);
-      oidcService.setSecret(secret);
-      ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
-      externalContext.redirect(authenticationRequest);
-    }*/
+    oidcService.setAuthCode(authCode);
+    oidcService.setClientId(clientId);
+    oidcService.setScope(scope);
+    oidcService.setRedirectUri(redirectUri);
+    oidcService.setDiscovery(discovery);
+    oidcService.setSecret(secret);
+    ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
+    externalContext.redirect(authenticationRequest);
   }
 
   public void onTabChange(TabChangeEvent event)
@@ -307,34 +279,12 @@ public class OpenIdConnectView implements Serializable
 
   public void exchangeCodeForTokens()
   {
-    if (authCode != null)
-    {
-      Form form = new Form()
-        .param("grant_type", "authorization_code")
-        .param("code", authCode)
-        .param("client_id", clientId)
-        .param("secret", scope)
-        .param("redirect_uri", getRedirectUri());
-      String tokenEndpoint = (String) discovery.get("token_endpoint");
-      System.out.println(">>> exchangeCodeForTokens(): We got the token_endpoint: " + tokenEndpoint);
-      Response response = client.target(tokenEndpoint)
-        .request(MediaType.APPLICATION_JSON)
-        .post(Entity.form(form));
-      //Map<String, Object> tokens = response.readEntity(Map.class);
-      String tokens = response.readEntity(String.class);
-      System.out.println(">>> exchangeCodeForTokens(): We got the tokens: " + tokens);
-      /*refreshToken = (String) tokens.get("refresh_token");
-      idToken = (String) tokens.get("id_token");
-      accessToken = (String) tokens.get("access_token");
-      System.out.println(">>> exchangeCodeForTokens(): We got the access_token: " + accessToken +
-        " the refresh token " + refreshToken + " and the id token " + idToken);*/
-    }
+
   }
 
   private String getRedirectUri()
   {
     String uri = keycloak.realm(realm).clients().findByClientId(clientId).getFirst().getRedirectUris().getFirst();
-    System.out.println(">>> getRedirectUri(): We got the uri: " + uri);
     return uri;
   }
 
@@ -360,3 +310,4 @@ public class OpenIdConnectView implements Serializable
     return formattedAuthRequest.toString();
   }
 }
+

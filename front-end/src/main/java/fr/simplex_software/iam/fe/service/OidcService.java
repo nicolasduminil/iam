@@ -1,12 +1,14 @@
 package fr.simplex_software.iam.fe.service;
 
 import jakarta.enterprise.context.*;
+import jakarta.inject.*;
 import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.*;
 
-import java.util.Map;
+import java.util.*;
 
 @ApplicationScoped
+@Named
 public class OidcService
 {
   private String authCode;
@@ -15,6 +17,9 @@ public class OidcService
   private String redirectUri;
   private Map<String, Object> discovery;
   private String secret;
+  private String accessToken;
+  private String idToken;
+  private String refreshToken;
 
 
   public void setAuthCode(String authCode)
@@ -47,6 +52,41 @@ public class OidcService
     this.secret = secret;
   }
 
+  public String getAuthCode()
+  {
+    return authCode;
+  }
+
+  public String getAccessToken()
+  {
+    return accessToken;
+  }
+
+  public void setAccessToken(String accessToken)
+  {
+    this.accessToken = accessToken;
+  }
+
+  public String getIdToken()
+  {
+    return idToken;
+  }
+
+  public void setIdToken(String idToken)
+  {
+    this.idToken = idToken;
+  }
+
+  public String getRefreshToken()
+  {
+    return refreshToken;
+  }
+
+  public void setRefreshToken(String refreshToken)
+  {
+    this.refreshToken = refreshToken;
+  }
+
   public void exchangeCodeForTokens()
   {
     try (Client client = ClientBuilder.newClient())
@@ -55,23 +95,17 @@ public class OidcService
         .param("grant_type", "authorization_code")
         .param("code", authCode)
         .param("client_id", clientId)
-        .param("secret", scope)
+        .param("client_secret", secret)
+        .param("scope", scope)
         .param("redirect_uri", redirectUri);
       String tokenEndpoint = (String) discovery.get("token_endpoint");
-      System.out.println(">>> exchangeCodeForTokens(): We got the token_endpoint: " + tokenEndpoint);
-      System.out.println(">>> exchangeCodeForTokens(): Getting token for authCoce " + authCode
-        + " and client " + clientId + " with secret " + secret + " and redirect_uri" + redirectUri);
       Response response = client.target(tokenEndpoint)
         .request(MediaType.APPLICATION_JSON)
         .post(Entity.form(form));
-      //Map<String, Object> tokens = response.readEntity(Map.class);
-      String tokens = response.readEntity(String.class);
-      System.out.println(">>> exchangeCodeForTokens(): We got the tokens: " + tokens);
-      /*refreshToken = (String) tokens.get("refresh_token");
+      Map<String, Object> tokens = response.readEntity(Map.class);
+      refreshToken = (String) tokens.get("refresh_token");
       idToken = (String) tokens.get("id_token");
       accessToken = (String) tokens.get("access_token");
-      System.out.println(">>> exchangeCodeForTokens(): We got the access_token: " + accessToken +
-        " the refresh token " + refreshToken + " and the id token " + idToken);*/
     }
   }
 }

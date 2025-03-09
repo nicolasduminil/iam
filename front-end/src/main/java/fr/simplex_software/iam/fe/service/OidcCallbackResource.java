@@ -15,7 +15,10 @@ public class OidcCallbackResource
   @GET
   public Response handleCallback(@QueryParam("code") String code)
   {
+    System.out.println (">>> handleCallback(): We got the code: " + code);
+    oidcService.setAuthCode(code);
     oidcService.exchangeCodeForTokens();
-    return Response.temporaryRedirect(UriBuilder.fromPath("index.xhtml").build()).build();
+    return Response.temporaryRedirect(UriBuilder.fromPath("index.xhtml")
+      .queryParam("activeIndex", "1").build()).build();
   }
 }
