@@ -9,11 +9,11 @@ import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.*;
 import org.eclipse.microprofile.config.inject.*;
 
-@RequestScoped
-@Path("/api/be")
-public class BackEndProvider implements BackEndAPI
+/*@RequestScoped
+@Path("/api/be")*/
+public class BackEndProvider //implements BackEndAPI
 {
-  @ConfigProperty(name = "keycloak.server-url")
+  /*@ConfigProperty(name = "keycloak.server-url")
   String serverUrl;
   private WebTarget webTarget;
   @ConfigProperty(name = "keycloak.authorization-uri-fmt")
@@ -41,7 +41,7 @@ public class BackEndProvider implements BackEndAPI
     System.out.println ("### URL: " + url);
     return Response.status(Response.Status.SEE_OTHER)
       .header(HttpHeaders.LOCATION, url)
-      .build();*/
+      .build();
     return Response.ok(webTarget.path(authorizationRequest.authorizationUri).queryParam("client_id", authorizationRequest.clientId)
       .queryParam("response_type", authorizationRequest.responseType).queryParam("redirect_uri", authorizationRequest.redirectUri)
       .queryParam("scope", "openid").request(MediaType.APPLICATION_JSON).get(String.class)).build();
@@ -64,5 +64,5 @@ public class BackEndProvider implements BackEndAPI
   public Response sendUserInfoRequest()
   {
     return null;
-  }
+  }*/
 }

@@ -63,11 +63,11 @@
   </dependencies>
   <build>
     <finalName>${project.artifactId}</finalName>
-    <plugins>
+    <!--plugins>
       <plugin>
         <groupId>io.quarkus.platform</groupId>
         <artifactId>quarkus-maven-plugin</artifactId>
       </plugin>
-    </plugins>
+    </plugins-->
   </build>
 </project>

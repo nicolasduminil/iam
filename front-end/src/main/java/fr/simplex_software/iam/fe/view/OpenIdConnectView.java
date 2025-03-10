@@ -1,5 +1,6 @@
 package fr.simplex_software.iam.fe.view;
 
+import fr.simplex_software.iam.domain.schema.*;
 import fr.simplex_software.iam.fe.service.*;
 import io.quarkus.runtime.annotations.*;
 import jakarta.enterprise.context.*;
@@ -30,15 +31,15 @@ public class OpenIdConnectView implements Serializable
   @RestClient
   private IamServiceClient iamServiceClient;
   @Inject
+  FacesContext facesContext;
+  @Inject
   OidcService oidcService;
+  @Inject
+  AuthorizationRequest authorizationRequest;
   @ConfigProperty(name = "quarkus.oidc.auth-server-url")
   String issuer;
   @ConfigProperty(name = "quarkus.discovery.endpoint")
   String discoveryEndpoint;
-  @ConfigProperty(name = "quarkus.oidc.client-id")
-  String clientId;
-  @ConfigProperty(name = "quarkus.oidc.credentials.client-secret.value")
-  String secret;
   @ConfigProperty(name = "keycloak.realm")
   String realm;
   private Map<String, Object> discovery;
@@ -46,28 +47,13 @@ public class OpenIdConnectView implements Serializable
   private boolean showDiscoveryJson;
   private String authenticationRequest;
   private boolean showAuthenticationRequest;
-  private String scope = "openid";
-  private String prompt;
-  private String maxAge;
-  private String loginHint;
   private String formattedAuthRequest;
   private Client client = ClientBuilder.newClient();
   private String authenticationRequestOutput;
-  private String authCode = "code";
+  private String authCode;
   private String accessToken;
   private String idToken;
   private String refreshToken;
-  private String redirectUri;
-
-  public String getClientId()
-  {
-    return clientId;
-  }
-
-  public void setClientId(String clientId)
-  {
-    this.clientId = clientId;
-  }
 
   public boolean isShowDiscoveryJson()
   {
@@ -107,46 +93,6 @@ public class OpenIdConnectView implements Serializable
   public void setDiscoveryJson(String discoveryJson)
   {
     this.discoveryJson = discoveryJson;
-  }
-
-  public String getScope()
-  {
-    return scope;
-  }
-
-  public void setScope(String scope)
-  {
-    this.scope = scope;
-  }
-
-  public String getPrompt()
-  {
-    return prompt;
-  }
-
-  public void setPrompt(String prompt)
-  {
-    this.prompt = prompt;
-  }
-
-  public String getMaxAge()
-  {
-    return maxAge;
-  }
-
-  public void setMaxAge(String maxAge)
-  {
-    this.maxAge = maxAge;
-  }
-
-  public String getLoginHint()
-  {
-    return loginHint;
-  }
-
-  public void setLoginHint(String loginHint)
-  {
-    this.loginHint = loginHint;
   }
 
   public String getFormattedAuthRequest()
@@ -209,14 +155,9 @@ public class OpenIdConnectView implements Serializable
     this.refreshToken = refreshToken;
   }
 
-  public String getSecret()
+  public AuthorizationRequest getAuthorizationRequest()
   {
-    return secret;
-  }
-
-  public void setSecret(String secret)
-  {
-    this.secret = secret;
+    return authorizationRequest;
   }
 
   public void loadDiscovery()
@@ -235,32 +176,29 @@ public class OpenIdConnectView implements Serializable
 
   public void generateAuthenticationRequest()
   {
-    if (StringUtils.isEmpty(authenticationRequest))
+    if (discovery == null || discovery.isEmpty())
+    {
+      FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+        "Discovery document not loaded", null);
+      facesContext.addMessage(null, message);
+      showAuthenticationRequest = false;
+    }
+    else if (StringUtils.isEmpty(authenticationRequest))
     {
       String authEndpoint = (String) discovery.get("authorization_endpoint");
-      redirectUri = getRedirectUri();
-      UriBuilder builder = UriBuilder.fromUri(authEndpoint)
-        .queryParam("client_id", clientId)
-        .queryParam("client_secret", secret)
-        .queryParam("redirect_uri", redirectUri)
-        .queryParam("response_type", "code")
-        .queryParam("scope", scope);
-      URI authUri = builder.build();
+      authorizationRequest.setRedirectUri(getRedirectUri());
+      URI authUri = authorizationRequest.buildAuthorizationUri(authEndpoint);
       authenticationRequest = authUri.toString();
       formattedAuthRequest = formatAuthRequest(authUri);
       showAuthenticationRequest = true;
-    } else
+    }
+    else
       showAuthenticationRequest = !showAuthenticationRequest;
   }
 
   public void sendAuthenticationRequest() throws IOException
   {
-    oidcService.setAuthCode(authCode);
-    oidcService.setClientId(clientId);
-    oidcService.setScope(scope);
-    oidcService.setRedirectUri(redirectUri);
-    oidcService.setDiscovery(discovery);
-    oidcService.setSecret(secret);
+    oidcService.setAuthorizationRequest(authorizationRequest);
     ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
     externalContext.redirect(authenticationRequest);
   }
@@ -277,14 +215,10 @@ public class OpenIdConnectView implements Serializable
     FacesContext.getCurrentInstance().addMessage(null, msg);
   }
 
-  public void exchangeCodeForTokens()
-  {
-
-  }
-
   private String getRedirectUri()
   {
-    String uri = keycloak.realm(realm).clients().findByClientId(clientId).getFirst().getRedirectUris().getFirst();
+    String uri = keycloak.realm(realm).clients().findByClientId(authorizationRequest.getClientId())
+      .getFirst().getRedirectUris().getFirst();
     return uri;
   }
 

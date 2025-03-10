@@ -21,7 +21,7 @@ public interface BackEndAPI
   @APIResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = String.class)))
   @POST
   @Path("auth")
-  Response sendAuthorizationRequest(@Parameter(description = "the OAuth 2 client ID", schema = @Schema(implementation = String.class, required = true))AuthorizationRequest authorizationRequest);
+  Response sendAuthorizationRequest(@Parameter(description = "the OAuth 2 client ID", schema = @Schema(implementation = String.class, required = true)) AuthorizationRequest authorizationRequest);
   @Operation(summary = "Send token request", description = "Send a token request")
   @APIResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TokenResponse.class)))
   @POST

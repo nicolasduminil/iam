@@ -14,7 +14,7 @@
         <p:tabView activeIndex="#{param.activeIndex}">
           <p:ajax event="tabChange" listener="#{openIdConnectView.onTabChange}" update=":form:msgs"/>
           <p:ajax event="tabClose" listener="#{openIdConnectView.onTabClose}" update=":form:msgs"/>
-          <p:tab title="Discovery">
+          <p:tab title="1. Discovery">
             <h:panelGrid columns="1" cellpadding="7" styleClass="mb-3">
               <p:outputLabel for="issuer-uri" value="Issuer URI:"/>
               <p:inputText id="issuer-uri" size="40" maxlength="255"
@@ -42,37 +42,37 @@
                                rendered="#{not empty openIdConnectView.discoveryJson and openIdConnectView.showDiscoveryJson}"/>
             </p:outputPanel>
           </p:tab>
-          <p:tab title="Authentication">
+          <p:tab title="2. Authentication">
             <h:panelGrid id="auth-panelGrid" columns="3" styleClass="mb-3">
               <p:outputLabel for="client-id" value="Client ID:"/>
               <p:inputText id="client-id"
-                           value="#{openIdConnectView.clientId}" required="true"
+                           value="#{openIdConnectView.authorizationRequest.clientId}" required="true"
                            label="client-id"/>
               <p:message for="client-id" display="icon"/>
               <p:outputLabel for="client-secret" value="Client secret:"/>
               <p:password id="client-secret"
-                          value="#{openIdConnectView.secret}" required="true"
+                          value="#{openIdConnectView.authorizationRequest.secret}" required="true"
                           redisplay="true"
                           label="client-secret"/>
               <p:message for="client-secret" display="icon"/>
               <p:outputLabel for="scope" value="Scope:"/>
               <p:inputText id="scope"
-                           value="#{openIdConnectView.scope}"
+                           value="#{openIdConnectView.authorizationRequest.scope}"
                            label="scope"/>
               <p:message for="scope" display="icon"/>
               <p:outputLabel for="prompt" value="Prompt:"/>
               <p:inputText id="prompt"
-                           value="#{openIdConnectView.prompt}"
+                           value="#{openIdConnectView.authorizationRequest.prompt}"
                            label="prompt"/>
               <p:message for="prompt" display="icon"/>
               <p:outputLabel for="max-age" value="Max age:"/>
               <p:inputText id="max-age"
-                           value="#{openIdConnectView.maxAge}"
+                           value="#{openIdConnectView.authorizationRequest.maxAge}"
                            label="max-age"/>
               <p:message for="max-age" display="icon"/>
               <p:outputLabel for="login-hint" value="Login hint:"/>
               <p:inputText id="login-hint"
-                           value="#{openIdConnectView.loginHint}"
+                           value="#{openIdConnectView.authorizationRequest.loginHint}"
                            label="login-hint"/>
               <p:message for="login-hint" display="icon"/>
               <p:commandButton
@@ -97,28 +97,29 @@
                                action="#{openIdConnectView.sendAuthenticationRequest()}"
                                icon="#{empty openIdConnectView.authenticationRequest ? 'pi pi-check' : (openIdConnectView.showAuthenticationRequest ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
             </h:panelGrid>
-            <h:panelGrid id="tokens-panelGrid" columns="3" styleClass="mb-3" rendered="#{not empty oidcService.authCode}">
+            <h:panelGrid id="tokens-panelGrid" columns="2" styleClass="mb-3"
+                         columnClasses="width: 20%; vertical-align: top;, width: 80%;"
+                         rendered="#{not empty oidcService.authCode}">
               <p:outputLabel for="auth-code" rendered="#{not empty oidcService.authCode}" value="Authorization code:"/>
               <p:inputText id="auth-code" rendered="#{not empty oidcService.authCode}"
-                           value="#{oidcService.authCode}" required="true"
+                           value="#{oidcService.authCode}" readonly="true"
                            size="100" label="auth-code"/>
-              <p:message for="auth-code" display="icon"/>
               <p:outputLabel for="id-token" rendered="#{not empty oidcService.idToken}" value="ID token:"/>
-              <p:inputText id="id-token" rendered="#{not empty oidcService.idToken}"
-                           value="#{oidcService.idToken}" required="true"
-                           size="100" label="id-token"/>
-              <p:message for="id-token" display="icon"/>
+              <p:inputTextarea id="id-token" rendered="#{not empty oidcService.idToken}"
+                               value="#{oidcService.idToken}"
+                               readonly="true" autoResize="false" rows="5" cols="600"
+                               style="width: 100%; height: 100%; border: 1px solid #ccc;" label="id-token"/>
               <p:outputLabel for="access-token" rendered="#{not empty oidcService.accessToken}" value="Access token:"/>
-              <p:inputText id="access-token" rendered="#{not empty oidcService.accessToken}"
-                           value="#{oidcService.accessToken}" required="true"
-                           size="100" label="access-token"/>
-              <p:message for="access-token" display="icon"/>
+              <p:inputTextarea id="access-token" rendered="#{not empty oidcService.accessToken}"
+                           value="#{oidcService.accessToken}"
+                           readonly="true" autoResize="false" rows="5" cols="60"
+                           style="width: 100%; height: 100%; border: 1px solid #ccc;" label="access-token"/>
               <p:outputLabel for="refresh-token" rendered="#{not empty oidcService.refreshToken}"
                              value="Refresh token:"/>
-              <p:inputText id="refresh-token"
-                           value="#{oidcService.refreshToken}" required="true"
-                           size="100" label="refresh-token"/>
-              <p:message for="refresh-token" display="icon"/>
+              <p:inputTextarea id="refresh-token"
+                           value="#{oidcService.refreshToken}"
+                           readonly="true" autoResize="false" rows="5" cols="60"
+                           style="width: 100%; height: 100%; border: 1px solid #ccc;" label="refresh-token"/>
             </h:panelGrid>
           </p:tab>
           <p:tab title="Token">

@@ -1,5 +1,6 @@
 package fr.simplex_software.iam.fe.service;
 
+import fr.simplex_software.iam.domain.schema.*;
 import jakarta.enterprise.context.*;
 import jakarta.inject.*;
 import jakarta.ws.rs.client.*;
@@ -11,6 +12,7 @@ import java.util.*;
 @Named
 public class OidcService
 {
+  private AuthorizationRequest authorizationRequest = new AuthorizationRequest();
   private String authCode;
   private String clientId;
   private String scope;
@@ -85,6 +87,16 @@ public class OidcService
   public void setRefreshToken(String refreshToken)
   {
     this.refreshToken = refreshToken;
+  }
+
+  public String getAuthorizationRequest()
+  {
+    return authorizationRequest.toString();
+  }
+
+  public void setAuthorizationRequest(AuthorizationRequest authorizationRequest)
+  {
+    this.authorizationRequest = authorizationRequest;
   }
 
   public void exchangeCodeForTokens()
