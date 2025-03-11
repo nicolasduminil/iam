@@ -12,13 +12,10 @@ import java.util.*;
 @Named
 public class OidcService
 {
-  private AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+  @Inject
+  AuthorizationRequest authorizationRequest;
   private String authCode;
-  private String clientId;
-  private String scope;
-  private String redirectUri;
   private Map<String, Object> discovery;
-  private String secret;
   private String accessToken;
   private String idToken;
   private String refreshToken;
@@ -29,29 +26,9 @@ public class OidcService
     this.authCode = authCode;
   }
 
-  public void setClientId(String clientId)
-  {
-    this.clientId = clientId;
-  }
-
-  public void setScope(String scope)
-  {
-    this.scope = scope;
-  }
-
-  public void setRedirectUri(String redirectUri)
-  {
-    this.redirectUri = redirectUri;
-  }
-
   public void setDiscovery(Map<String, Object> discovery)
   {
     this.discovery = discovery;
-  }
-
-  public void setSecret(String secret)
-  {
-    this.secret = secret;
   }
 
   public String getAuthCode()
@@ -106,10 +83,10 @@ public class OidcService
       Form form = new Form()
         .param("grant_type", "authorization_code")
         .param("code", authCode)
-        .param("client_id", clientId)
-        .param("client_secret", secret)
-        .param("scope", scope)
-        .param("redirect_uri", redirectUri);
+        .param("client_id", authorizationRequest.getClientId())
+        .param("client_secret", authorizationRequest.getSecret())
+        .param("scope", authorizationRequest.getScope())
+        .param("redirect_uri", authorizationRequest.getRedirectUri());
       String tokenEndpoint = (String) discovery.get("token_endpoint");
       Response response = client.target(tokenEndpoint)
         .request(MediaType.APPLICATION_JSON)

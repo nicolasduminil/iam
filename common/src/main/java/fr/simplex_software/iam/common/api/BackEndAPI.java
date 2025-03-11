@@ -12,7 +12,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.*;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface BackEndAPI
 {
-  @Operation(summary = "Load discovery metadata", description = "Display the OpenId Connect Metadata")
+  /*@Operation(summary = "Load discovery metadata", description = "Display the OpenId Connect Metadata")
   @APIResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = DiscoveryMetadata.class)))
   @POST
   @Path("load")
@@ -36,5 +36,5 @@ public interface BackEndAPI
   @APIResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = UserInfoResponse.class)))
   @GET
   @Path("user")
-  Response sendUserInfoRequest();
+  Response sendUserInfoRequest();*/
 }

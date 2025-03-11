@@ -28,8 +28,6 @@ public class OpenIdConnectView implements Serializable
 {
   @Inject
   Keycloak keycloak;
-  @RestClient
-  private IamServiceClient iamServiceClient;
   @Inject
   FacesContext facesContext;
   @Inject
@@ -199,6 +197,7 @@ public class OpenIdConnectView implements Serializable
   public void sendAuthenticationRequest() throws IOException
   {
     oidcService.setAuthorizationRequest(authorizationRequest);
+    oidcService.setDiscovery(discovery);
     ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
     externalContext.redirect(authenticationRequest);
   }
@@ -213,6 +212,20 @@ public class OpenIdConnectView implements Serializable
   {
     FacesMessage msg = new FacesMessage("Tab Closed", "Closed tab: " + event.getTab().getTitle());
     FacesContext.getCurrentInstance().addMessage(null, msg);
+  }
+
+  public void handleInputChange()
+  {
+    discoveryJson = null;
+    showDiscoveryJson = false;
+    authenticationRequest = null;
+    showAuthenticationRequest = false;
+    formattedAuthRequest = null;
+    authenticationRequestOutput = null;
+    authCode = null;
+    accessToken = null;
+    idToken = null;
+    refreshToken = null;
   }
 
   private String getRedirectUri()
