@@ -78,23 +78,26 @@ public class OidcService
 
   public void exchangeCodeForTokens()
   {
+    Map<String, Object> tokens = getTokenResponse().readEntity(Map.class);
+    refreshToken = (String) tokens.get("refresh_token");
+    idToken = (String) tokens.get("id_token");
+    accessToken = (String) tokens.get("access_token");
+  }
+
+  public Response getTokenResponse()
+  {
     try (Client client = ClientBuilder.newClient())
     {
       Form form = new Form()
         .param("grant_type", "authorization_code")
         .param("code", authCode)
         .param("client_id", authorizationRequest.getClientId())
-        .param("client_secret", authorizationRequest.getSecret())
         .param("scope", authorizationRequest.getScope())
         .param("redirect_uri", authorizationRequest.getRedirectUri());
       String tokenEndpoint = (String) discovery.get("token_endpoint");
-      Response response = client.target(tokenEndpoint)
+      return client.target(tokenEndpoint)
         .request(MediaType.APPLICATION_JSON)
         .post(Entity.form(form));
-      Map<String, Object> tokens = response.readEntity(Map.class);
-      refreshToken = (String) tokens.get("refresh_token");
-      idToken = (String) tokens.get("id_token");
-      accessToken = (String) tokens.get("access_token");
     }
   }
 }

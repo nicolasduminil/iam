@@ -1,10 +1,8 @@
 {
   "clientId" : "fe",
   "enabled" : true,
-  "clientAuthenticatorType" : "client-secret",
-  "secret" : "this_is_a_secret",
   "protocol" : "openid-connect",
-  "publicClient" : false,
+  "publicClient" : true,
   "bearerOnly" : false,
   "standardFlowEnabled" : true,
   "implicitFlowEnabled" : false,

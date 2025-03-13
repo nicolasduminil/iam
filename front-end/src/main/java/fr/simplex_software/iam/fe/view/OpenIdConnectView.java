@@ -12,7 +12,6 @@ import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.*;
 import org.apache.commons.lang3.*;
 import org.eclipse.microprofile.config.inject.*;
-import org.eclipse.microprofile.rest.client.inject.*;
 import org.keycloak.admin.client.*;
 import org.primefaces.event.*;
 
@@ -52,6 +51,7 @@ public class OpenIdConnectView implements Serializable
   private String accessToken;
   private String idToken;
   private String refreshToken;
+  private String tokenResponse;
 
   public boolean isShowDiscoveryJson()
   {
@@ -158,6 +158,11 @@ public class OpenIdConnectView implements Serializable
     return authorizationRequest;
   }
 
+  public String getTokenResponse()
+  {
+    return tokenResponse;
+  }
+
   public void loadDiscovery()
   {
     if (StringUtils.isEmpty(discoveryJson))
@@ -180,8 +185,7 @@ public class OpenIdConnectView implements Serializable
         "Discovery document not loaded", null);
       facesContext.addMessage(null, message);
       showAuthenticationRequest = false;
-    }
-    else if (StringUtils.isEmpty(authenticationRequest))
+    } else if (StringUtils.isEmpty(authenticationRequest))
     {
       String authEndpoint = (String) discovery.get("authorization_endpoint");
       authorizationRequest.setRedirectUri(getRedirectUri());
@@ -189,8 +193,7 @@ public class OpenIdConnectView implements Serializable
       authenticationRequest = authUri.toString();
       formattedAuthRequest = formatAuthRequest(authUri);
       showAuthenticationRequest = true;
-    }
-    else
+    } else
       showAuthenticationRequest = !showAuthenticationRequest;
   }
 
@@ -200,6 +203,11 @@ public class OpenIdConnectView implements Serializable
     oidcService.setDiscovery(discovery);
     ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
     externalContext.redirect(authenticationRequest);
+  }
+
+  public void sendTokenRequest()
+  {
+    tokenResponse = oidcService.getTokenResponse().readEntity(String.class);
   }
 
   public void onTabChange(TabChangeEvent event)
