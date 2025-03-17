@@ -19,6 +19,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.*;
 import java.util.*;
+import java.util.HashMap;
 
 @Named
 @SessionScoped
@@ -191,7 +192,7 @@ public class OpenIdConnectView implements Serializable
       authorizationRequest.setRedirectUri(getRedirectUri());
       URI authUri = authorizationRequest.buildAuthorizationUri(authEndpoint);
       authenticationRequest = authUri.toString();
-      formattedAuthRequest = formatAuthRequest(authUri);
+      formattedAuthRequest = formatRequest(authUri);
       showAuthenticationRequest = true;
     } else
       showAuthenticationRequest = !showAuthenticationRequest;
@@ -207,7 +208,9 @@ public class OpenIdConnectView implements Serializable
 
   public void sendTokenRequest()
   {
-    tokenResponse = oidcService.getTokenResponse().readEntity(String.class);
+    tokenResponse = JsonbBuilder.create(new JsonbConfig()
+        .withFormatting(true))
+      .toJson(truncateTokens(oidcService.getTokenResponse().readEntity(Map.class)));
   }
 
   public void onTabChange(TabChangeEvent event)
@@ -243,7 +246,7 @@ public class OpenIdConnectView implements Serializable
     return uri;
   }
 
-  private String formatAuthRequest(URI authRequest)
+  public static String formatRequest(URI authRequest)
   {
     StringBuilder formattedAuthRequest = new StringBuilder();
     formattedAuthRequest.append(authRequest.getScheme())
@@ -263,6 +266,19 @@ public class OpenIdConnectView implements Serializable
       }
     }
     return formattedAuthRequest.toString();
+  }
+
+  private Map<String, Object> truncateTokens(Map<String, Object> tokens)
+  {
+    Map<String, Object> truncatedTokens = new HashMap<>();
+    tokens.forEach((key, value) ->
+    {
+      if (key.equals("access_token") || key.equals("refresh_token") || key.equals("id_token"))
+        truncatedTokens.put(key, ((String) value).substring(0, 10) + "...");
+      else
+        truncatedTokens.put(key, value);
+    });
+    return truncatedTokens;
   }
 }
 

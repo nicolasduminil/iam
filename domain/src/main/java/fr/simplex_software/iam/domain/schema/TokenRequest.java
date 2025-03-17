@@ -1,17 +1,85 @@
 package fr.simplex_software.iam.domain.schema;
 
 import jakarta.json.bind.annotation.*;
+import jakarta.ws.rs.core.*;
 import org.eclipse.microprofile.openapi.annotations.media.*;
+
+import java.net.*;
 
 @Schema(description = "The token request metadata")
 public class TokenRequest
 {
   @JsonbProperty("grant_type")
-  public String grantType;
+  private String grantType;
   @JsonbProperty("authorization_code")
-  public String authorizationCode;
+  private String authorizationCode;
   @JsonbProperty("client_id")
-  public String clientId;
+  private String clientId;
+  @JsonbProperty("scope")
+  private String scope;
   @JsonbProperty("redirect_uri")
-  public String redirectUri;
+  private String redirectUri;
+
+  public TokenRequest()
+  {
+  }
+
+  public TokenRequest(String grantType, String authorizationCode, String clientId, String scope, String redirectUri)
+  {
+    this.grantType = grantType;
+    this.authorizationCode = authorizationCode;
+    this.scope = scope;
+    this.clientId = clientId;
+    this.redirectUri = redirectUri;
+  }
+
+  public TokenRequest(AuthorizationRequest authorizationRequest, String authorizationCode)
+  {
+    this.grantType = "authorization_code";
+    this.authorizationCode = authorizationCode;
+    this.scope = authorizationRequest.getScope();
+    this.clientId = authorizationRequest.getClientId();
+    this.redirectUri = authorizationRequest.getRedirectUri();
+  }
+
+  public String getGrantType()
+  {
+    return grantType;
+  }
+
+  public String getClientId()
+  {
+    return clientId;
+  }
+
+  public String getRedirectUri()
+  {
+    return redirectUri;
+  }
+
+  public String getScope()
+  {
+    return scope;
+  }
+
+  public URI buildTokenUri(String tokenEndpoint)
+  {
+    UriBuilder builder = UriBuilder.fromUri(tokenEndpoint)
+      .queryParam("grant_type", grantType)
+      .queryParam("code", authorizationCode.substring(0, 10) + "...")
+      .queryParam("client_id", clientId)
+      .queryParam("scope", scope)
+      .queryParam("redirect_uri", redirectUri);
+    return builder.build();
+  }
+
+  public Form toForm()
+  {
+    return new Form()
+      .param("grant_type", this.getGrantType())
+      .param("code", this.authorizationCode)
+      .param("client_id", this.getClientId())
+      .param("scope", this.getScope())
+      .param("redirect_uri", this.getRedirectUri());
+  }
 }

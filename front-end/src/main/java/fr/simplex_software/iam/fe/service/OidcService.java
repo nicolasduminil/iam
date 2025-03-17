@@ -1,6 +1,7 @@
 package fr.simplex_software.iam.fe.service;
 
 import fr.simplex_software.iam.domain.schema.*;
+import fr.simplex_software.iam.fe.view.*;
 import jakarta.enterprise.context.*;
 import jakarta.inject.*;
 import jakarta.ws.rs.client.*;
@@ -19,6 +20,7 @@ public class OidcService
   private String accessToken;
   private String idToken;
   private String refreshToken;
+  private String formattedTokenRequest;
 
 
   public void setAuthCode(String authCode)
@@ -76,6 +78,11 @@ public class OidcService
     this.authorizationRequest = authorizationRequest;
   }
 
+  public String getFormattedTokenRequest()
+  {
+    return formattedTokenRequest;
+  }
+
   public void exchangeCodeForTokens()
   {
     Map<String, Object> tokens = getTokenResponse().readEntity(Map.class);
@@ -88,16 +95,12 @@ public class OidcService
   {
     try (Client client = ClientBuilder.newClient())
     {
-      Form form = new Form()
-        .param("grant_type", "authorization_code")
-        .param("code", authCode)
-        .param("client_id", authorizationRequest.getClientId())
-        .param("scope", authorizationRequest.getScope())
-        .param("redirect_uri", authorizationRequest.getRedirectUri());
+      TokenRequest tokenRequest = new TokenRequest(authorizationRequest, authCode);
       String tokenEndpoint = (String) discovery.get("token_endpoint");
+      formattedTokenRequest = OpenIdConnectView.formatRequest(tokenRequest.buildTokenUri(tokenEndpoint));
       return client.target(tokenEndpoint)
         .request(MediaType.APPLICATION_JSON)
-        .post(Entity.form(form));
+        .post(Entity.form(tokenRequest.toForm()));
     }
   }
 }
