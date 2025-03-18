@@ -121,7 +121,7 @@
                            size="100" label="auth-code"/>
             </h:panelGrid>
           </p:tab>
-          <p:tab title="3. Token">
+          <p:tab title="3. ID Token">
             <h:panelGrid id="token-panelGrid" columns="1" styleClass="mb-3">
               <p:outputLabel for="auth-code-2" rendered="#{not empty oidcService.authCode}"
                              value="Authentication response:"/>
@@ -135,19 +135,59 @@
                                icon="#{empty openIdConnectView.authenticationRequest ? 'pi pi-check' : (openIdConnectView.showAuthenticationRequest ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
               <p:outputLabel for="token-request" rendered="#{not empty oidcService.formattedTokenRequest}"
                              value="Token request:"/>
-                <p:inputTextarea id="token-request" rendered="#{not empty oidcService.formattedTokenRequest}"
-                                 autoResize="false" rows="5" cols="30"
-                                 style="width: 60%; height: 100%; border: 1px solid #ccc;"
-                                 value="#{oidcService.formattedTokenRequest}" readonly="true"
-                                 label="token-request"/>
-              <p:outputLabel for="token-response" rendered="#{not empty openIdConnectView.tokenResponse}"
-                             value="Token response:"/>
-              <p:inputTextarea id="token-response" rendered="#{not empty openIdConnectView.tokenResponse}"
+              <p:inputTextarea id="token-request" rendered="#{not empty oidcService.formattedTokenRequest}"
                                autoResize="false" rows="5" cols="30"
                                style="width: 60%; height: 100%; border: 1px solid #ccc;"
-                               value="#{openIdConnectView.tokenResponse}" readonly="true"
-                               label="token-response"/>
-
+                               value="#{oidcService.formattedTokenRequest}" readonly="true"
+                               label="token-request"/>
+              <p:outputLabel for="token-header" rendered="#{not empty openIdConnectView.headerJson}"
+                             value="ID Token header:"/>
+              <p:inputTextarea id="token-header" rendered="#{not empty openIdConnectView.headerJson}"
+                               autoResize="false" rows="5" cols="30"
+                               style="width: 60%; height: 100%; border: 1px solid #ccc;"
+                               value="#{openIdConnectView.headerJson}" readonly="true"
+                               label="token-header"/>
+              <p:outputLabel for="token-payload" rendered="#{not empty openIdConnectView.payloadJson}"
+                             value="ID Token payload:"/>
+              <p:inputTextarea id="token-payload" rendered="#{not empty openIdConnectView.payloadJson}"
+                               autoResize="false" rows="5" cols="30"
+                               style="width: 60%; height: 100%; border: 1px solid #ccc;"
+                               value="#{openIdConnectView.payloadJson}" readonly="true"
+                               label="token-payload"/>
+              <p:outputLabel for="token-signature" rendered="#{not empty openIdConnectView.idTokenSignature}"
+                             value="ID Token signature:"/>
+              <p:inputText id="token-signature" rendered="#{not empty openIdConnectView.idTokenSignature}"
+                               value="#{openIdConnectView.idTokenSignature}" readonly="true"
+                               size="100" label="token-signature"/>
+            </h:panelGrid>
+          </p:tab>
+          <p:tab title="4. Refresh Token">
+            <h:panelGrid id="refresh-panelGrid" columns="1" styleClass="mb-3">
+              <p:commandButton value="Send Refresh Request"
+                               update="refresh-panelGrid" process="@this"
+                               action="#{openIdConnectView.sendRefreshRequest()}"
+                               icon="pi pi-check"/>
+              <p:outputLabel for="refresh-request" rendered="#{not empty openIdConnectView.formattedRefreshRequest}"
+                             value="Refresh request:"/>
+              <p:inputTextarea id="refresh-request" rendered="#{not empty openIdConnectView.formattedRefreshRequest}"
+                               autoResize="false" rows="5" cols="30"
+                               style="width: 60%; height: 100%; border: 1px solid #ccc;"
+                               value="#{openIdConnectView.formattedRefreshRequest}" readonly="true"
+                               label="refresh-request"/>
+              <p:outputLabel for="refresh-response" rendered="#{not empty openIdConnectView.refreshResponse}"
+                             value="Refresh response:"/>
+              <p:inputTextarea id="refresh-response" rendered="#{not empty openIdConnectView.refreshResponse}"
+                               autoResize="false" rows="5" cols="30"
+                               style="width: 60%; height: 100%; border: 1px solid #ccc;"
+                               value="#{openIdConnectView.refreshResponse}" readonly="true"
+                               label="token-header"/>
+              <p:outputLabel for="refresh-payload" rendered="#{not empty openIdConnectView.refreshPayloadJson}"
+                             value="ID Token payload:"/>
+              <p:inputTextarea id="refresh-payload" rendered="#{not empty openIdConnectView.refreshPayloadJson}"
+                               autoResize="false" rows="5" cols="30"
+                               style="width: 60%; height: 100%; border: 1px solid #ccc;"
+                               value="#{openIdConnectView.refreshPayloadJson}" readonly="true"
+                               label="refresh-payload"/>
             </h:panelGrid>
           </p:tab>
         </p:tabView>

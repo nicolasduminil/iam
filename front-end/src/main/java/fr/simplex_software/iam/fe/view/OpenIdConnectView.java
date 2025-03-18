@@ -7,6 +7,7 @@ import jakarta.enterprise.context.*;
 import jakarta.faces.application.*;
 import jakarta.faces.context.*;
 import jakarta.inject.*;
+import jakarta.json.*;
 import jakarta.json.bind.*;
 import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.*;
@@ -53,6 +54,14 @@ public class OpenIdConnectView implements Serializable
   private String idToken;
   private String refreshToken;
   private String tokenResponse;
+  private String headerJson;
+  private String payloadJson;
+  private String idTokenSignature;
+  private Jsonb jsonb = JsonbBuilder.create(new JsonbConfig().withFormatting(true));
+  private String formattedRefreshRequest;
+  private String sendRefreshRequest;
+  private String refreshResponse;
+  private String refreshPayloadJson;
 
   public boolean isShowDiscoveryJson()
   {
@@ -164,15 +173,48 @@ public class OpenIdConnectView implements Serializable
     return tokenResponse;
   }
 
+  public String getHeaderJson()
+  {
+    return headerJson;
+  }
+
+  public String getPayloadJson()
+  {
+    return payloadJson;
+  }
+
+  public String getIdTokenSignature()
+  {
+    return idTokenSignature;
+  }
+
+  public String getFormattedRefreshRequest()
+  {
+    return formattedRefreshRequest;
+  }
+
+  public String getSendRefreshRequest()
+  {
+    return sendRefreshRequest;
+  }
+
+  public String getRefreshResponse()
+  {
+    return refreshResponse;
+  }
+
+  public String getRefreshPayloadJson()
+  {
+    return refreshPayloadJson;
+  }
+
   public void loadDiscovery()
   {
     if (StringUtils.isEmpty(discoveryJson))
     {
       discovery = client.target(issuer + discoveryEndpoint)
         .request(MediaType.APPLICATION_JSON).get(Map.class);
-      discoveryJson = JsonbBuilder.create(new JsonbConfig()
-          .withFormatting(true))
-        .toJson(discovery);
+      discoveryJson = prettyPrintJsonB(discovery);
       showDiscoveryJson = true;
     } else
       showDiscoveryJson = !showDiscoveryJson;
@@ -208,9 +250,13 @@ public class OpenIdConnectView implements Serializable
 
   public void sendTokenRequest()
   {
-    tokenResponse = JsonbBuilder.create(new JsonbConfig()
-        .withFormatting(true))
-      .toJson(truncateTokens(oidcService.getTokenResponse().readEntity(Map.class)));
+    Map<String, Object> map = oidcService.getTokenResponse().readEntity(Map.class);
+    idToken = (String) map.get("id_token");
+    String[] idTokenParts = idToken.split("\\.");
+    headerJson = prettyPrintJsonB(new String(Base64.getUrlDecoder().decode(idTokenParts[0]), StandardCharsets.UTF_8));
+    payloadJson = prettyPrintJsonB(new String(Base64.getUrlDecoder().decode(idTokenParts[1]), StandardCharsets.UTF_8));
+    idTokenSignature = idTokenParts[2];
+    tokenResponse = prettyPrintJsonB(truncateTokens(oidcService.getTokenResponse().readEntity(Map.class)));
   }
 
   public void onTabChange(TabChangeEvent event)
@@ -268,6 +314,11 @@ public class OpenIdConnectView implements Serializable
     return formattedAuthRequest.toString();
   }
 
+  public void sendRefreshRequest()
+  {
+
+  }
+
   private Map<String, Object> truncateTokens(Map<String, Object> tokens)
   {
     Map<String, Object> truncatedTokens = new HashMap<>();
@@ -279,6 +330,16 @@ public class OpenIdConnectView implements Serializable
         truncatedTokens.put(key, value);
     });
     return truncatedTokens;
+  }
+
+  private String prettyPrintJsonB(String uglyJson)
+  {
+    return jsonb.toJson(jsonb.fromJson(uglyJson, JsonObject.class));
+  }
+
+  private String prettyPrintJsonB(Map<String, Object> uglyJson)
+  {
+    return jsonb.toJson(jsonb.fromJson(jsonb.toJson(uglyJson), JsonObject.class));
   }
 }
 
