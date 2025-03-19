@@ -157,12 +157,12 @@
               <p:outputLabel for="token-signature" rendered="#{not empty openIdConnectView.idTokenSignature}"
                              value="ID Token signature:"/>
               <p:inputText id="token-signature" rendered="#{not empty openIdConnectView.idTokenSignature}"
-                               value="#{openIdConnectView.idTokenSignature}" readonly="true"
-                               size="100" label="token-signature"/>
+                           value="#{openIdConnectView.idTokenSignature}" readonly="true"
+                           size="100" label="token-signature"/>
             </h:panelGrid>
           </p:tab>
           <p:tab title="4. Refresh Token">
-            <h:panelGrid id="refresh-panelGrid" columns="1" styleClass="mb-3 style='width: 100%'">
+            <h:panelGrid id="refresh-panelGrid" columns="1" styleClass="mb-3">
               <p:commandButton value="Send Refresh Request"
                                update="refresh-panelGrid" process="@this"
                                action="#{openIdConnectView.sendRefreshRequest()}"
@@ -188,6 +188,36 @@
                                style="width: 100%; height: 100%; border: 1px solid #ccc;"
                                value="#{openIdConnectView.refreshPayloadJson}" readonly="true"
                                label="refresh-payload"/>
+            </h:panelGrid>
+          </p:tab>
+          <p:tab title="5. UserInfo">
+            <h:panelGrid id="userinfo-panelGrid" columns="1" styleClass="mb-3">
+              <p:commandButton value="Send UserInfo Request"
+                               update="userinfo-panelGrid" process="@this"
+                               action="#{openIdConnectView.sendUserInfoRequest()}"
+                               icon="pi pi-check"/>
+              <p:outputLabel for="userinfo-request" rendered="#{not empty openIdConnectView.formattedUserInfoRequest}"
+                             value="UserInfo request:"/>
+              <p:inputTextarea id="userinfo-request" rendered="#{not empty openIdConnectView.formattedUserInfoRequest}"
+                               autoResize="false" rows="5" cols="30"
+                               style="width: 100%; height: 100%; border: 1px solid #ccc;"
+                               value="#{openIdConnectView.formattedUserInfoRequest}" readonly="true"
+                               label="userinfo-request"/>
+              <p:outputLabel for="userinfo-response" rendered="#{not empty openIdConnectView.userInfoResponse}"
+                             value="UserInfo response:"/>
+              <p:inputTextarea id="userinfo-response" rendered="#{not empty openIdConnectView.userInfoResponse}"
+                               autoResize="false" rows="5" cols="30"
+                               style="width: 100%; height: 100%; border: 1px solid #ccc;"
+                               value="#{openIdConnectView.userInfoResponse}" readonly="true"
+                               label="token-header"/>
+            </h:panelGrid>
+          </p:tab>
+          <p:tab title="Reset">
+            <h:panelGrid id="reset-panelGrid" columns="1" styleClass="mb-3">
+              <p:commandButton value="Reset"
+                               update="reset-panelGrid" process="@this"
+                               action="#{openIdConnectView.reset()}"
+                               icon="pi pi-check"/>
             </h:panelGrid>
           </p:tab>
         </p:tabView>

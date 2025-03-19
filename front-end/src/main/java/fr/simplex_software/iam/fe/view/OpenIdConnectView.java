@@ -62,6 +62,8 @@ public class OpenIdConnectView implements Serializable
   private String sendRefreshRequest;
   private String refreshResponse;
   private String refreshPayloadJson;
+  private String userInfoResponse;
+  String formattedUserInfoRequest;
 
   public boolean isShowDiscoveryJson()
   {
@@ -208,6 +210,16 @@ public class OpenIdConnectView implements Serializable
     return refreshPayloadJson;
   }
 
+  public String getUserInfoResponse()
+  {
+    return userInfoResponse;
+  }
+
+  public String getFormattedUserInfoRequest()
+  {
+    return formattedUserInfoRequest;
+  }
+
   public void loadDiscovery()
   {
     if (StringUtils.isEmpty(discoveryJson))
@@ -331,6 +343,24 @@ public class OpenIdConnectView implements Serializable
     refreshResponse = prettyPrintJsonB(truncateTokens(map));
     String[] idTokenParts = idToken.split("\\.");
     refreshPayloadJson = prettyPrintJsonB(new String(Base64.getUrlDecoder().decode(idTokenParts[1]), StandardCharsets.UTF_8));
+  }
+
+  public void sendUserInfoRequest()
+  {
+    String userInfoEndpoint = (String) discovery.get("userinfo_endpoint");
+    formattedUserInfoRequest = formatRequest(URI.create(userInfoEndpoint));
+    userInfoResponse = prettyPrintJsonB(client.target(userInfoEndpoint)
+      .request(MediaType.APPLICATION_JSON)
+      .header("Authorization", "Bearer " + accessToken)
+      .get(String.class));
+  }
+
+  public void reset() throws IOException
+  {
+    handleInputChange();
+    ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
+    externalContext.redirect(UriBuilder.fromPath("index.xhtml")
+      .queryParam("activeIndex", "0").build().toString());
   }
 
   private Map<String, Object> truncateTokens(Map<String, Object> tokens)
