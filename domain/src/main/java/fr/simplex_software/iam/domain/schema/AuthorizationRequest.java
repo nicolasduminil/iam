@@ -15,9 +15,6 @@ public class AuthorizationRequest implements Serializable
   @Schema(required = true)
   @WithName("client.id")
   private String clientId;
-  /*@Schema(required = true)
-  @WithName("client.secret")
-  private String secret;*/
   @Schema(required = true)
   @WithName("client.responseType")
   @WithDefault("")
@@ -45,7 +42,6 @@ public class AuthorizationRequest implements Serializable
   public AuthorizationRequest(String clientId, String secret, String redirectUri, String responseType, String scope, Optional<String> prompt, Optional<String> maxAge, Optional<String> loginHint)
   {
     this.clientId = clientId;
-    //this.secret = secret;
     this.redirectUri = redirectUri;
     this.responseType = responseType;
     this.scope = scope;
@@ -63,16 +59,6 @@ public class AuthorizationRequest implements Serializable
   {
     this.clientId = clientId;
   }
-
-  /*public String getSecret()
-  {
-    return secret;
-  }
-
-  public void setSecret(String secret)
-  {
-    this.secret = secret;
-  }*/
 
   public String getRedirectUri()
   {

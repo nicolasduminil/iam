@@ -252,11 +252,13 @@ public class OpenIdConnectView implements Serializable
   {
     Map<String, Object> map = oidcService.getTokenResponse().readEntity(Map.class);
     idToken = (String) map.get("id_token");
+    accessToken = (String) map.get("access_token");
+    refreshToken = (String) map.get("refresh_token");
     String[] idTokenParts = idToken.split("\\.");
     headerJson = prettyPrintJsonB(new String(Base64.getUrlDecoder().decode(idTokenParts[0]), StandardCharsets.UTF_8));
     payloadJson = prettyPrintJsonB(new String(Base64.getUrlDecoder().decode(idTokenParts[1]), StandardCharsets.UTF_8));
     idTokenSignature = idTokenParts[2];
-    tokenResponse = prettyPrintJsonB(truncateTokens(oidcService.getTokenResponse().readEntity(Map.class)));
+    tokenResponse = prettyPrintJsonB(truncateTokens(map));
   }
 
   public void onTabChange(TabChangeEvent event)
@@ -316,7 +318,19 @@ public class OpenIdConnectView implements Serializable
 
   public void sendRefreshRequest()
   {
-
+    RefreshRequest refreshRequest = new RefreshRequest("refresh_token", refreshToken,
+      authorizationRequest.getClientId(), authorizationRequest.getScope());
+    String tokenEndpoint = (String) discovery.get("token_endpoint");
+    formattedRefreshRequest = formatRequest(refreshRequest.buildTokenUri(tokenEndpoint));
+    Map<String, Object> map = client.target(tokenEndpoint)
+      .request(MediaType.APPLICATION_JSON)
+      .post(Entity.form(refreshRequest.toForm())).readEntity(Map.class);
+    idToken = (String) map.get("id_token");
+    accessToken = (String) map.get("access_token");
+    refreshToken = (String) map.get("refresh_token");
+    refreshResponse = prettyPrintJsonB(truncateTokens(map));
+    String[] idTokenParts = idToken.split("\\.");
+    refreshPayloadJson = prettyPrintJsonB(new String(Base64.getUrlDecoder().decode(idTokenParts[1]), StandardCharsets.UTF_8));
   }
 
   private Map<String, Object> truncateTokens(Map<String, Object> tokens)
