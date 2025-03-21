@@ -1,7 +1,6 @@
 package fr.simplex_software.iam.fe.view;
 
 import fr.simplex_software.iam.domain.schema.*;
-import fr.simplex_software.iam.fe.service.*;
 import io.quarkus.runtime.annotations.*;
 import jakarta.enterprise.context.*;
 import jakarta.faces.application.*;
@@ -9,6 +8,7 @@ import jakarta.faces.context.*;
 import jakarta.inject.*;
 import jakarta.json.*;
 import jakarta.json.bind.*;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.*;
 import org.apache.commons.lang3.*;
@@ -20,19 +20,17 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.*;
 import java.util.*;
-import java.util.HashMap;
 
 @Named
-@SessionScoped
+@ApplicationScoped
 @RegisterForReflection(serialization = true)
+@Path("/callback")
 public class OpenIdConnectView implements Serializable
 {
   @Inject
   Keycloak keycloak;
   @Inject
   FacesContext facesContext;
-  @Inject
-  OidcService oidcService;
   @Inject
   AuthorizationRequest authorizationRequest;
   @ConfigProperty(name = "quarkus.oidc.auth-server-url")
@@ -47,23 +45,23 @@ public class OpenIdConnectView implements Serializable
   private String authenticationRequest;
   private boolean showAuthenticationRequest;
   private String formattedAuthRequest;
-  private Client client = ClientBuilder.newClient();
-  private String authenticationRequestOutput;
+  private final Client client = ClientBuilder.newClient();
   private String authCode;
-  private String accessToken;
   private String idToken;
-  private String refreshToken;
   private String tokenResponse;
   private String headerJson;
   private String payloadJson;
   private String idTokenSignature;
-  private Jsonb jsonb = JsonbBuilder.create(new JsonbConfig().withFormatting(true));
+  private final Jsonb jsonb = JsonbBuilder.create(new JsonbConfig().withFormatting(true));
   private String formattedRefreshRequest;
   private String sendRefreshRequest;
   private String refreshResponse;
   private String refreshPayloadJson;
   private String userInfoResponse;
-  String formattedUserInfoRequest;
+  private String formattedUserInfoRequest;
+  private String formattedTokenRequest;
+  private String accessToken;
+  private String refreshToken;
 
   public boolean isShowDiscoveryJson()
   {
@@ -113,16 +111,6 @@ public class OpenIdConnectView implements Serializable
   public void setFormattedAuthRequest(String formattedAuthRequest)
   {
     this.formattedAuthRequest = formattedAuthRequest;
-  }
-
-  public String getAuthenticationRequestOutput()
-  {
-    return authenticationRequestOutput;
-  }
-
-  public void setAuthenticationRequestOutput(String authenticationRequestOutput)
-  {
-    this.authenticationRequestOutput = authenticationRequestOutput;
   }
 
   public String getAuthCode()
@@ -220,6 +208,20 @@ public class OpenIdConnectView implements Serializable
     return formattedUserInfoRequest;
   }
 
+  public String getFormattedTokenRequest()
+  {
+    return formattedTokenRequest;
+  }
+
+  @GET
+  public Response handleCallback(@QueryParam("code") String code)
+  {
+    authCode = code;
+    return Response.temporaryRedirect(UriBuilder.fromPath("index.xhtml")
+      .queryParam("activeIndex", "1").build()).build();
+  }
+
+
   public void loadDiscovery()
   {
     if (StringUtils.isEmpty(discoveryJson))
@@ -228,7 +230,8 @@ public class OpenIdConnectView implements Serializable
         .request(MediaType.APPLICATION_JSON).get(Map.class);
       discoveryJson = prettyPrintJsonB(discovery);
       showDiscoveryJson = true;
-    } else
+    }
+    else
       showDiscoveryJson = !showDiscoveryJson;
   }
 
@@ -240,7 +243,8 @@ public class OpenIdConnectView implements Serializable
         "Discovery document not loaded", null);
       facesContext.addMessage(null, message);
       showAuthenticationRequest = false;
-    } else if (StringUtils.isEmpty(authenticationRequest))
+    }
+    else if (StringUtils.isEmpty(authenticationRequest))
     {
       String authEndpoint = (String) discovery.get("authorization_endpoint");
       authorizationRequest.setRedirectUri(getRedirectUri());
@@ -248,21 +252,20 @@ public class OpenIdConnectView implements Serializable
       authenticationRequest = authUri.toString();
       formattedAuthRequest = formatRequest(authUri);
       showAuthenticationRequest = true;
-    } else
+    }
+    else
       showAuthenticationRequest = !showAuthenticationRequest;
   }
 
   public void sendAuthenticationRequest() throws IOException
   {
-    oidcService.setAuthorizationRequest(authorizationRequest);
-    oidcService.setDiscovery(discovery);
     ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
     externalContext.redirect(authenticationRequest);
   }
 
   public void sendTokenRequest()
   {
-    Map<String, Object> map = oidcService.getTokenResponse().readEntity(Map.class);
+    Map<String, Object> map = actionGetTokenResponse().readEntity(Map.class);
     idToken = (String) map.get("id_token");
     accessToken = (String) map.get("access_token");
     refreshToken = (String) map.get("refresh_token");
@@ -271,6 +274,16 @@ public class OpenIdConnectView implements Serializable
     payloadJson = prettyPrintJsonB(new String(Base64.getUrlDecoder().decode(idTokenParts[1]), StandardCharsets.UTF_8));
     idTokenSignature = idTokenParts[2];
     tokenResponse = prettyPrintJsonB(truncateTokens(map));
+  }
+
+  public Response actionGetTokenResponse()
+  {
+    TokenRequest tokenRequest = new TokenRequest(authorizationRequest, authCode);
+    String tokenEndpoint = (String) discovery.get("token_endpoint");
+    formattedTokenRequest = formatRequest(tokenRequest.buildTokenUri(tokenEndpoint));
+    return client.target(tokenEndpoint)
+      .request(MediaType.APPLICATION_JSON)
+      .post(Entity.form(tokenRequest.toForm()));
   }
 
   public void onTabChange(TabChangeEvent event)
@@ -292,11 +305,20 @@ public class OpenIdConnectView implements Serializable
     authenticationRequest = null;
     showAuthenticationRequest = false;
     formattedAuthRequest = null;
-    authenticationRequestOutput = null;
     authCode = null;
     accessToken = null;
     idToken = null;
     refreshToken = null;
+    userInfoResponse = null;
+    formattedRefreshRequest = null;
+    refreshResponse = null;
+    refreshPayloadJson = null;
+    formattedTokenRequest = null;
+    headerJson = null;
+    payloadJson = null;
+    idTokenSignature = null;
+    formattedUserInfoRequest = null;
+    tokenResponse = null;
   }
 
   private String getRedirectUri()
