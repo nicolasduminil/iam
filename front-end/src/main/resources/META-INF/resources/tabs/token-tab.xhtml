@@ -1,0 +1,46 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:f="jakarta.faces.core"
+                xmlns:h="jakarta.faces.html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="jakarta.faces.facelets">
+  <p:tab title="3. ID Token">
+    <p:panelGrid id="token-panelGrid" columns="1" styleClass="mb-3">
+      <p:outputLabel for="auth-code-2" rendered="#{not empty openIdConnectView.authCode}"
+                     value="Authentication response:"/>
+      <p:inputText id="auth-code-2" rendered="#{not empty openIdConnectView.authCode}"
+                   value="#{openIdConnectView.authCode}" readonly="true"
+                   size="100" label="auth-code"/>
+      <p:commandButton value="Send Token Request"
+                       rendered="#{not empty openIdConnectView.authenticationRequest and openIdConnectView.showAuthenticationRequest}"
+                       update="token-panelGrid refresh-panelGrid" process="@this"
+                       action="#{openIdConnectView.sendTokenRequest()}"
+                       icon="#{empty openIdConnectView.authenticationRequest ? 'pi pi-check' : (openIdConnectView.showAuthenticationRequest ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
+      <p:outputLabel for="token-request" rendered="#{not empty openIdConnectView.formattedTokenRequest}"
+                     value="Token request:"/>
+      <p:inputTextarea id="token-request" rendered="#{not empty openIdConnectView.formattedTokenRequest}"
+                       autoResize="false" rows="5" cols="30"
+                       style="width: 25%; height: 100%; border: 1px solid #ccc;"
+                       value="#{openIdConnectView.formattedTokenRequest}" readonly="true"
+                       label="token-request"/>
+      <p:outputLabel for="token-header" rendered="#{not empty openIdConnectView.headerJson}"
+                     value="ID Token header:"/>
+      <p:inputTextarea id="token-header" rendered="#{not empty openIdConnectView.headerJson}"
+                       autoResize="false" rows="5" cols="30"
+                       style="width: 25%; height: 100%; border: 1px solid #ccc;"
+                       value="#{openIdConnectView.headerJson}" readonly="true"
+                       label="token-header"/>
+      <p:outputLabel for="token-payload" rendered="#{not empty openIdConnectView.payloadJson}"
+                     value="ID Token payload:"/>
+      <p:inputTextarea id="token-payload" rendered="#{not empty openIdConnectView.payloadJson}"
+                       autoResize="false" rows="5" cols="30"
+                       style="width: 20%; height: 100%; border: 1px solid #ccc;"
+                       value="#{openIdConnectView.payloadJson}" readonly="true"
+                       label="token-payload"/>
+      <p:outputLabel for="token-signature" rendered="#{not empty openIdConnectView.idTokenSignature}"
+                     value="ID Token signature:"/>
+      <p:inputText id="token-signature" rendered="#{not empty openIdConnectView.idTokenSignature}"
+                   value="#{openIdConnectView.idTokenSignature}" readonly="true"
+                   size="100" label="token-signature"/>
+    </p:panelGrid>
+  </p:tab>
+</ui:composition>

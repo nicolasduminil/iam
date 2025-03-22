@@ -1,0 +1,34 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:f="jakarta.faces.core"
+                xmlns:h="jakarta.faces.html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="jakarta.faces.facelets">
+  <p:tab title="1. Discovery">
+    <p:panelGrid columns="1" cellpadding="7" styleClass="mb-3">
+      <p:outputLabel for="issuer-uri" value="Issuer URI:"/>
+      <p:inputText id="issuer-uri" size="40" maxlength="255"
+                   value="#{openIdConnectView.issuer}" required="true"
+                   label="issuer-uri">
+        <f:validateLength minimum="30"/>
+      </p:inputText>
+      <p:message for="issuer-uri" display="icon"/>
+    </p:panelGrid>
+    <p:commandButton
+      value="#{empty openIdConnectView.discoveryJson ? 'Discover' : (openIdConnectView.showDiscoveryJson ? 'Hide Details' : 'Show Details')}"
+      update="@form :form:msgs" process="@this issuer-uri"
+      action="#{openIdConnectView.loadDiscovery}"
+      onclick="console.log('Button clicked');"
+      oncomplete="console.log('Request completed');"
+      icon="#{empty openIdConnectView.discoveryJson ? 'pi pi-check' : (openIdConnectView.showDiscoveryJson ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
+    <div style="height: 10px;"></div>
+    <p:outputPanel id="introspection-details-panel" style="max-height: 20em; max-width: 60em; overflow: auto;">
+      <h:outputLabel for="introspection-details" value="OpenID provider configuration: "
+                     rendered="#{not empty openIdConnectView.discoveryJson and openIdConnectView.showDiscoveryJson}"/>
+      <div style="height: 10px;"></div>
+      <p:inputTextarea id="introspection-details" value="#{openIdConnectView.discoveryJson}"
+                       readonly="true" autoResize="false" rows="10" cols="30"
+                       style="width: 100%; height: 100%; border: 1px solid #ccc;"
+                       rendered="#{not empty openIdConnectView.discoveryJson and openIdConnectView.showDiscoveryJson}"/>
+    </p:outputPanel>
+  </p:tab>
+</ui:composition>

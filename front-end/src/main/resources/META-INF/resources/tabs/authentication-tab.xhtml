@@ -1,0 +1,85 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:f="jakarta.faces.core"
+                xmlns:h="jakarta.faces.html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="jakarta.faces.facelets">
+  <p:tab title="2. Authentication">
+    <h:panelGrid id="auth-panelGrid" columns="3" styleClass="mb-3">
+      <p:outputLabel for="client-id" value="Client ID:"/>
+      <p:inputText id="client-id"
+                   value="#{openIdConnectView.authorizationRequest.clientId}" required="true"
+                   label="client-id">
+        <p:ajax event="keyup" listener="#{openIdConnectView.handleInputChange}"
+                update="auth-panelGrid"/>
+      </p:inputText>
+      <p:message for="client-id" display="icon"/>
+      <p:outputLabel for="scope" value="Scope:"/>
+      <p:inputText id="scope"
+                   value="#{openIdConnectView.authorizationRequest.scope}"
+                   label="scope">
+        <p:ajax event="keyup" listener="#{openIdConnectView.handleInputChange}"
+                update="auth-panelGrid"/>
+      </p:inputText>
+      <p:spacer/>
+      <p:outputLabel for="prompt" value="Prompt:"/>
+      <p:inputText id="prompt"
+                   value="#{openIdConnectView.authorizationRequest.prompt}"
+                   valueChangeListener="#{openIdConnectView.clean}"
+                   label="prompt">
+        <p:ajax event="keyup" listener="#{openIdConnectView.handleInputChange}"
+                update="auth-panelGrid"/>
+      </p:inputText>
+      <p:spacer/>
+      <p:outputLabel for="max-age" value="Max age:"/>
+      <p:inputText id="max-age"
+                   value="#{openIdConnectView.authorizationRequest.maxAge}"
+                   label="max-age">
+        <p:ajax event="keyup" listener="#{openIdConnectView.handleInputChange}"
+                update="auth-panelGrid"/>
+      </p:inputText>
+      <p:spacer/>
+      <p:outputLabel for="login-hint" value="Login hint:"/>
+      <p:inputText id="login-hint" required="false"
+                   value="#{openIdConnectView.authorizationRequest.loginHint}"
+                   label="login-hint">
+        <p:ajax event="keyup" listener="#{openIdConnectView.handleInputChange}"
+                update="auth-panelGrid"/>
+      </p:inputText>
+      <p:spacer/>
+      <p:commandButton
+        value="#{empty openIdConnectView.authenticationRequest ?
+                'Generate' : (openIdConnectView.showAuthenticationRequest ?
+                'Hide Request' : 'Show Request')}"
+        update="auth-panelGrid :form:msgs" process="@this"
+        action="#{openIdConnectView.generateAuthenticationRequest}"
+        icon="#{empty openIdConnectView.authenticationRequest ?
+                'pi pi-check' : (openIdConnectView.showAuthenticationRequest ?
+                'pi pi-eye-slash' : 'pi pi-eye')}"/>
+      <div style="height: 10px;"></div>
+      <p:outputPanel id="authentication-request-panel"
+                     style="max-height: 20em; max-width: 60em; overflow: auto;">
+        <h:outputLabel for="authentication-request" value="Authentication request: "
+                       rendered="#{not empty openIdConnectView.authenticationRequest and openIdConnectView.showAuthenticationRequest}"/>
+        <div style="height: 10px;"></div>
+        <p:inputTextarea id="authentication-request" value="#{openIdConnectView.formattedAuthRequest}"
+                         readonly="true" autoResize="false" rows="5" cols="60"
+                         style="width: 100%; height: 100%; border: 1px solid #ccc;"
+                         rendered="#{not empty openIdConnectView.formattedAuthRequest and openIdConnectView.showAuthenticationRequest}"/>
+      </p:outputPanel>
+      <p:commandButton value="Send Authentication Request"
+                       rendered="#{not empty openIdConnectView.authenticationRequest and openIdConnectView.showAuthenticationRequest}"
+                       update="auth-code-panelGrid" process="@this"
+                       action="#{openIdConnectView.sendAuthenticationRequest()}"
+                       icon="#{empty openIdConnectView.authenticationRequest ? 'pi pi-check' : (openIdConnectView.showAuthenticationRequest ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
+    </h:panelGrid>
+    <h:panelGrid id="auth-code-panelGrid" columns="2" styleClass="mb-3"
+                 columnClasses="width: 20%; vertical-align: top;, width: 80%;"
+                 rendered="#{not empty openIdConnectView.authCode}">
+      <p:outputLabel for="auth-code" rendered="#{not empty openIdConnectView.authCode}"
+                     value="Authentication response:"/>
+      <p:inputText id="auth-code" rendered="#{not empty openIdConnectView.authCode}"
+                   value="#{openIdConnectView.authCode}" readonly="true"
+                   size="100" label="auth-code"/>
+    </h:panelGrid>
+  </p:tab>
+</ui:composition>
