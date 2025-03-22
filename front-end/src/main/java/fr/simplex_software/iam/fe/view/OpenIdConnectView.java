@@ -2,6 +2,7 @@ package fr.simplex_software.iam.fe.view;
 
 import fr.simplex_software.iam.domain.schema.*;
 import io.quarkus.runtime.annotations.*;
+import jakarta.annotation.*;
 import jakarta.enterprise.context.*;
 import jakarta.faces.application.*;
 import jakarta.faces.context.*;
@@ -14,7 +15,6 @@ import jakarta.ws.rs.core.*;
 import org.apache.commons.lang3.*;
 import org.eclipse.microprofile.config.inject.*;
 import org.keycloak.admin.client.*;
-import org.primefaces.event.*;
 
 import java.io.*;
 import java.net.*;
@@ -33,6 +33,8 @@ public class OpenIdConnectView implements Serializable
   FacesContext facesContext;
   @Inject
   AuthorizationRequest authorizationRequest;
+  @Inject
+  ClientManager clientManager;
   @ConfigProperty(name = "quarkus.oidc.auth-server-url")
   String issuer;
   @ConfigProperty(name = "quarkus.discovery.endpoint")
@@ -45,16 +47,15 @@ public class OpenIdConnectView implements Serializable
   private String authenticationRequest;
   private boolean showAuthenticationRequest;
   private String formattedAuthRequest;
-  private final Client client = ClientBuilder.newClient();
   private String authCode;
   private String idToken;
   private String tokenResponse;
   private String headerJson;
   private String payloadJson;
   private String idTokenSignature;
-  private final Jsonb jsonb = JsonbBuilder.create(new JsonbConfig().withFormatting(true));
+  private final Jsonb jsonb = JsonbBuilder.create(new JsonbConfig()
+    .withFormatting(true));
   private String formattedRefreshRequest;
-  private String sendRefreshRequest;
   private String refreshResponse;
   private String refreshPayloadJson;
   private String userInfoResponse;
@@ -93,64 +94,14 @@ public class OpenIdConnectView implements Serializable
     this.issuer = issuer;
   }
 
-  public void setAuthenticationRequest(String authenticationRequest)
-  {
-    this.authenticationRequest = authenticationRequest;
-  }
-
-  public void setDiscoveryJson(String discoveryJson)
-  {
-    this.discoveryJson = discoveryJson;
-  }
-
   public String getFormattedAuthRequest()
   {
     return formattedAuthRequest;
   }
 
-  public void setFormattedAuthRequest(String formattedAuthRequest)
-  {
-    this.formattedAuthRequest = formattedAuthRequest;
-  }
-
   public String getAuthCode()
   {
     return authCode;
-  }
-
-  public void setAuthCode(String authCode)
-  {
-    this.authCode = authCode;
-  }
-
-  public String getAccessToken()
-  {
-    return accessToken;
-  }
-
-  public void setAccessToken(String accessToken)
-  {
-    this.accessToken = accessToken;
-  }
-
-  public String getIdToken()
-  {
-    return idToken;
-  }
-
-  public void setIdToken(String idToken)
-  {
-    this.idToken = idToken;
-  }
-
-  public String getRefreshToken()
-  {
-    return refreshToken;
-  }
-
-  public void setRefreshToken(String refreshToken)
-  {
-    this.refreshToken = refreshToken;
   }
 
   public AuthorizationRequest getAuthorizationRequest()
@@ -181,11 +132,6 @@ public class OpenIdConnectView implements Serializable
   public String getFormattedRefreshRequest()
   {
     return formattedRefreshRequest;
-  }
-
-  public String getSendRefreshRequest()
-  {
-    return sendRefreshRequest;
   }
 
   public String getRefreshResponse()
@@ -221,13 +167,13 @@ public class OpenIdConnectView implements Serializable
       .queryParam("activeIndex", "1").build()).build();
   }
 
-
   public void loadDiscovery()
   {
     if (StringUtils.isEmpty(discoveryJson))
     {
-      discovery = client.target(issuer + discoveryEndpoint)
-        .request(MediaType.APPLICATION_JSON).get(Map.class);
+      discovery = clientManager.getClient().target(issuer + discoveryEndpoint)
+        .request(MediaType.APPLICATION_JSON)
+        .get(new GenericType<>() {});
       discoveryJson = prettyPrintJsonB(discovery);
       showDiscoveryJson = true;
     }
@@ -265,15 +211,18 @@ public class OpenIdConnectView implements Serializable
 
   public void sendTokenRequest()
   {
-    Map<String, Object> map = actionGetTokenResponse().readEntity(Map.class);
-    idToken = (String) map.get("id_token");
-    accessToken = (String) map.get("access_token");
-    refreshToken = (String) map.get("refresh_token");
-    String[] idTokenParts = idToken.split("\\.");
-    headerJson = prettyPrintJsonB(new String(Base64.getUrlDecoder().decode(idTokenParts[0]), StandardCharsets.UTF_8));
-    payloadJson = prettyPrintJsonB(new String(Base64.getUrlDecoder().decode(idTokenParts[1]), StandardCharsets.UTF_8));
-    idTokenSignature = idTokenParts[2];
-    tokenResponse = prettyPrintJsonB(truncateTokens(map));
+    try (Response response = actionGetTokenResponse())
+    {
+      Map<String, Object> map = response.readEntity(new GenericType<>() {});
+      idToken = (String) map.get("id_token");
+      accessToken = (String) map.get("access_token");
+      refreshToken = (String) map.get("refresh_token");
+      String[] idTokenParts = idToken.split("\\.");
+      headerJson = prettyPrintJsonB(new String(Base64.getUrlDecoder().decode(idTokenParts[0]), StandardCharsets.UTF_8));
+      payloadJson = prettyPrintJsonB(new String(Base64.getUrlDecoder().decode(idTokenParts[1]), StandardCharsets.UTF_8));
+      idTokenSignature = idTokenParts[2];
+      tokenResponse = prettyPrintJsonB(truncateTokens(map));
+    }
   }
 
   public Response actionGetTokenResponse()
@@ -281,21 +230,9 @@ public class OpenIdConnectView implements Serializable
     TokenRequest tokenRequest = new TokenRequest(authorizationRequest, authCode);
     String tokenEndpoint = (String) discovery.get("token_endpoint");
     formattedTokenRequest = formatRequest(tokenRequest.buildTokenUri(tokenEndpoint));
-    return client.target(tokenEndpoint)
+    return clientManager.getClient().target(tokenEndpoint)
       .request(MediaType.APPLICATION_JSON)
       .post(Entity.form(tokenRequest.toForm()));
-  }
-
-  public void onTabChange(TabChangeEvent event)
-  {
-    FacesMessage msg = new FacesMessage("Tab Changed", "Active Tab: " + event.getTab().getTitle());
-    FacesContext.getCurrentInstance().addMessage(null, msg);
-  }
-
-  public void onTabClose(TabCloseEvent event)
-  {
-    FacesMessage msg = new FacesMessage("Tab Closed", "Closed tab: " + event.getTab().getTitle());
-    FacesContext.getCurrentInstance().addMessage(null, msg);
   }
 
   public void handleInputChange()
@@ -323,12 +260,12 @@ public class OpenIdConnectView implements Serializable
 
   private String getRedirectUri()
   {
-    String uri = keycloak.realm(realm).clients().findByClientId(authorizationRequest.getClientId())
+    return keycloak.realm(realm).clients()
+      .findByClientId(authorizationRequest.getClientId())
       .getFirst().getRedirectUris().getFirst();
-    return uri;
   }
 
-  public static String formatRequest(URI authRequest)
+  public String formatRequest(URI authRequest)
   {
     StringBuilder formattedAuthRequest = new StringBuilder();
     formattedAuthRequest.append(authRequest.getScheme())
@@ -356,22 +293,25 @@ public class OpenIdConnectView implements Serializable
       authorizationRequest.getClientId(), authorizationRequest.getScope());
     String tokenEndpoint = (String) discovery.get("token_endpoint");
     formattedRefreshRequest = formatRequest(refreshRequest.buildTokenUri(tokenEndpoint));
-    Map<String, Object> map = client.target(tokenEndpoint)
+    try (Response response = clientManager.getClient().target(tokenEndpoint)
       .request(MediaType.APPLICATION_JSON)
-      .post(Entity.form(refreshRequest.toForm())).readEntity(Map.class);
-    idToken = (String) map.get("id_token");
-    accessToken = (String) map.get("access_token");
-    refreshToken = (String) map.get("refresh_token");
-    refreshResponse = prettyPrintJsonB(truncateTokens(map));
-    String[] idTokenParts = idToken.split("\\.");
-    refreshPayloadJson = prettyPrintJsonB(new String(Base64.getUrlDecoder().decode(idTokenParts[1]), StandardCharsets.UTF_8));
+      .post(Entity.form(refreshRequest.toForm())))
+    {
+      Map<String, Object> map = response.readEntity(new GenericType<>() {});
+      idToken = (String) map.get("id_token");
+      //accessToken = (String) map.get("access_token");
+      refreshToken = (String) map.get("refresh_token");
+      refreshResponse = prettyPrintJsonB(truncateTokens(map));
+      String[] idTokenParts = idToken.split("\\.");
+      refreshPayloadJson = prettyPrintJsonB(new String(Base64.getUrlDecoder().decode(idTokenParts[1]), StandardCharsets.UTF_8));
+    }
   }
 
   public void sendUserInfoRequest()
   {
     String userInfoEndpoint = (String) discovery.get("userinfo_endpoint");
     formattedUserInfoRequest = formatRequest(URI.create(userInfoEndpoint));
-    userInfoResponse = prettyPrintJsonB(client.target(userInfoEndpoint)
+    userInfoResponse = prettyPrintJsonB(clientManager.getClient().target(userInfoEndpoint)
       .request(MediaType.APPLICATION_JSON)
       .header("Authorization", "Bearer " + accessToken)
       .get(String.class));
@@ -406,6 +346,33 @@ public class OpenIdConnectView implements Serializable
   private String prettyPrintJsonB(Map<String, Object> uglyJson)
   {
     return jsonb.toJson(jsonb.fromJson(jsonb.toJson(uglyJson), JsonObject.class));
+  }
+
+  @Named
+  @ApplicationScoped
+  public static class ClientManager
+  {
+    private Client client;
+
+    @PostConstruct
+    public void init()
+    {
+      client = ClientBuilder.newClient();
+    }
+
+    @PreDestroy
+    public void cleanup()
+    {
+      if (client != null)
+      {
+        client.close();
+      }
+    }
+
+    public Client getClient()
+    {
+      return client;
+    }
   }
 }
 

@@ -13,8 +13,6 @@
       <div class="card">
         <h1>OpenID Connect Sandbox</h1>
         <p:tabView activeIndex="#{param.activeIndex}">
-          <p:ajax event="tabChange" listener="#{openIdConnectView.onTabChange}" update=":form:msgs"/>
-          <p:ajax event="tabClose" listener="#{openIdConnectView.onTabClose}" update=":form:msgs"/>
           <ui:include src="tabs/discovery-tab.xhtml"/>
           <ui:include src="tabs/authentication-tab.xhtml"/>
           <ui:include src="tabs/token-tab.xhtml"/>
