@@ -1,0 +1,73 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ui="jakarta.faces.facelets" xmlns:h="jakarta.faces.html"
+  xmlns:p="http://primefaces.org/ui" xmlns:f="jakarta.faces.core">
+<f:view contentType="text/html" encoding="UTF-8">
+  <h:head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <f:facet name="last">
+      <h:outputStylesheet library="css" name="default.css"/>
+    </f:facet>
+    <title><ui:insert name="title">Please add a proper title for this page !</ui:insert></title>
+  </h:head>
+  <h:body>
+    <h:form id="navForm">
+      <ui:insert name="menu">
+        <p:menubar id="navBar">
+          <p:menuitem id="home" value="Home" url="/index.xhtml"/>
+          <p:submenu id="keycloack" label="Keycloak Model">
+            <p:menuitem id="keycloak-id" value="Keycloak sandbox" url="/keycloak/keycloak-sandbox.xhtml"/>
+          </p:submenu>
+        </p:menubar>
+      </ui:insert>
+      <h1>Welcome to the Keycloak Sandbox</h1>
+      <p:panel>
+        <h:panelGrid columns="2">
+          <h:graphicImage value="/img/simplex.png" alt="Simplex logo" />
+          <div>
+            <p>
+              <strong style="fontfamily: Arial;">The Keycloak server is runnin as a Docker image !</strong>
+              <br/>
+              <span style="fontFamily: Tahoma; font-size: 0.85em">Here are some of the features this service provides:</span>
+            </p>
+          </div>
+          <div style="fontfamily: Garamond; font-size: 0.70em;">
+            <ul style="margin-left: 100px; padding: 0; text-align: left;">
+              <li>Single-Sign On and Single-Sign Out for browser applications</li>
+              <li>OpenID Connect support</li>
+              <li>OAuth 2.0 support</li>
+              <li>SAML support</li>
+              <li>Identity Brokering - Authenticate with external OpenID Connect or SAML Identity Providers</li>
+              <li>Social Login - Enable login with Google, GitHub, Facebook, Twitter, and other social network</li>
+              <li>User Federation - Sync users from LDAP and Active Directory servers</li>
+              <li>Kerberos bridge - Automatically authenticate users that are logged-in to a Kerberos server</li>
+              <li>Admin Console for central management of users, roles, role mappings, clients and configuration</li>
+              <li>Account Management console that allows users to centrally manage their account</li>
+              <li>Theme support - Customize all user facing pages to integrate with your applications and branding</li>
+              <li>Two-factor Authentication - Support for TOTP/HOTP via Google Authenticator or FreeOTP</li>
+              <li>Login flows - optional user self-registration, recover password, verify email, require password update, etc</li>
+              <li>Session management - Admins and users themselves can view and manage user sessions</li>
+              <li>Token mappers - Map user attributes, roles, etc. how you want into tokens and statements</li>
+              <li>Not-before revocation policies per realm, application and user</li>
+              <li>CORS support - Client adapters have built-in support for CORS</li>
+              <li>Client adapters for JavaScript applications, WildFly, JBoss EAP, Fuse, Tomcat, Jetty, Spring, etc</li>
+              <li>Supports any platform/language that has an OpenID Connect Resource Provider library or SAML 2.0 Service Provider library</li>
+            </ul>
+          </div>
+        </h:panelGrid>
+      </p:panel>
+    </h:form>
+    <p:panel id="content" style="text-align: center">
+      <ui:insert name="content">Content</ui:insert>
+    </p:panel>
+    <div style="display: flex; justify-content: center; text-align: center; padding: 5px; background-color: #45a1ff; color: #000;">
+      <p style="font-size: 0.85em;">
+        Powered by <a href="https://quarkus.io/" style="color: #000;">Quarkus</a>
+        and <a href="https://www.primefaces.org/" style="color: #000;">PrimeFaces</a>
+        <br/>
+        <span style="font-size: 0.65em;">&copy; 2024 Simplex Software</span>
+      </p>
+    </div>
+  </h:body>
+</f:view>
+</html>

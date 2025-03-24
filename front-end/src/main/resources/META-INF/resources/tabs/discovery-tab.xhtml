@@ -1,9 +1,8 @@
-<ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:f="jakarta.faces.core"
+<ui:composition xmlns:ui="jakarta.faces.facelets" template="../templates/template.xhtml"
                 xmlns:h="jakarta.faces.html"
-                xmlns:p="http://primefaces.org/ui"
-                xmlns:ui="jakarta.faces.facelets">
-  <p:tab title="1. Discovery">
+                xmlns:f="jakarta.faces.core"
+                xmlns:p="http://primefaces.org/ui">
+<p:tab title="1. Discovery">
     <p:panelGrid columns="1" cellpadding="7" styleClass="mb-3">
       <p:outputLabel for="issuer-uri" value="Issuer URI:"/>
       <p:inputText id="issuer-uri" size="40" maxlength="255"

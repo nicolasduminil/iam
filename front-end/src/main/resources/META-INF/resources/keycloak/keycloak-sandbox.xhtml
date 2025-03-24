@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="jakarta.faces.facelets" template="../templates/template.xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:p="http://primefaces.org/ui">
+  <ui:define name="title">Keycloak Sandbox</ui:define>
+  <ui:define name="content">
+    <h3>Using the Keycloak Identity Provider</h3>
+    <h:form id="keycloak-main-form">
+      <f:view contentType="text/html">
+        <h:head>
+        </h:head>
+        <h:body>
+          <h:form id="form">
+            <p:growl id="msgs" showDetail="true" skipDetailIfEqualsSummary="true"/>
+            <div class="card">
+              <h1>OpenID Connect Sandbox</h1>
+              <p:tabView activeIndex="#{param.activeIndex}">
+                <ui:include src="/tabs/discovery-tab.xhtml"/>
+              </p:tabView>
+            </div>
+          </h:form>
+        </h:body>
+      </f:view>
+    </h:form>
+  </ui:define>
+</ui:composition>

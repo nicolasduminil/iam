@@ -1,27 +1,14 @@
-<!DOCTYPE html>
-<html lang="en"
-      xmlns:f="jakarta.faces.core"
-      xmlns:h="jakarta.faces.html"
-      xmlns:p="http://primefaces.org/ui"
-      xmlns:ui="jakarta.faces.facelets">
-<f:view contentType="text/html">
-  <h:head>
-  </h:head>
-  <h:body>
-    <h:form id="form">
-      <p:growl id="msgs" showDetail="true" skipDetailIfEqualsSummary="true"/>
-      <div class="card">
-        <h1>OpenID Connect Sandbox</h1>
-        <p:tabView activeIndex="#{param.activeIndex}">
-          <ui:include src="tabs/discovery-tab.xhtml"/>
-          <ui:include src="tabs/authentication-tab.xhtml"/>
-          <ui:include src="tabs/token-tab.xhtml"/>
-          <ui:include src="tabs/refresh-tab.xhtml"/>
-          <ui:include src="tabs/userinfo-tab.xhtml"/>
-          <ui:include src="tabs/reset-tab.xhtml"/>
-        </p:tabView>
-      </div>
-    </h:form>
-  </h:body>
-</f:view>
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ui="jakarta.faces.facelets">
+<body>
+<ui:composition template="./templates/template.xhtml">
+  <ui:define name="title">Keycloak Identity Provider</ui:define>
+  <ui:define name="top">
+    Using OIDC and OAuth 2.0 with Keycloak
+  </ui:define>
+  <ui:define name="content"/>
+</ui:composition>
+</body>
 </html>
