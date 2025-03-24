@@ -1,9 +1,9 @@
-<ui:composition xmlns:ui="jakarta.faces.facelets" template="../templates/template.xhtml"
+<ui:composition xmlns:ui="jakarta.faces.facelets"
                 xmlns:h="jakarta.faces.html"
                 xmlns:f="jakarta.faces.core"
                 xmlns:p="http://primefaces.org/ui">
 <p:tab title="1. Discovery">
-    <p:panelGrid columns="1" cellpadding="7" styleClass="mb-3">
+    <h:panelGrid columns="1" cellpadding="7" styleClass="mb-3">
       <p:outputLabel for="issuer-uri" value="Issuer URI:"/>
       <p:inputText id="issuer-uri" size="40" maxlength="255"
                    value="#{openIdConnectView.issuer}" required="true"
@@ -11,14 +11,14 @@
         <f:validateLength minimum="30"/>
       </p:inputText>
       <p:message for="issuer-uri" display="icon"/>
-    </p:panelGrid>
-    <p:commandButton
-      value="#{empty openIdConnectView.discoveryJson ? 'Discover' : (openIdConnectView.showDiscoveryJson ? 'Hide Details' : 'Show Details')}"
-      update="@form :form:msgs" process="@this issuer-uri"
-      action="#{openIdConnectView.loadDiscovery}"
-      onclick="console.log('Button clicked');"
-      oncomplete="console.log('Request completed');"
-      icon="#{empty openIdConnectView.discoveryJson ? 'pi pi-check' : (openIdConnectView.showDiscoveryJson ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
+      <p:commandButton
+        value="#{empty openIdConnectView.discoveryJson ? 'Discover' : (openIdConnectView.showDiscoveryJson ? 'Hide Details' : 'Show Details')}"
+        update="@form :form:msgs" process="@this issuer-uri"
+        action="#{openIdConnectView.loadDiscovery}"
+        onclick="console.log('Button clicked');"
+        oncomplete="console.log('Request completed');"
+        icon="#{empty openIdConnectView.discoveryJson ? 'pi pi-check' : (openIdConnectView.showDiscoveryJson ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
+    </h:panelGrid>
     <div style="height: 10px;"></div>
     <p:outputPanel id="introspection-details-panel" style="max-height: 20em; max-width: 60em; overflow: auto;">
       <h:outputLabel for="introspection-details" value="OpenID provider configuration: "

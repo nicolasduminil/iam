@@ -4,7 +4,7 @@
                 xmlns:p="http://primefaces.org/ui"
                 xmlns:ui="jakarta.faces.facelets">
   <p:tab title="3. ID Token">
-    <p:panelGrid id="token-panelGrid" columns="1" styleClass="mb-3">
+    <p:panelGrid id="token-panelGrid" columns="1" styleClass="mb-3" style="text-align: left;">
       <p:outputLabel for="auth-code-2" rendered="#{not empty openIdConnectView.authCode}"
                      value="Authentication response:"/>
       <p:inputText id="auth-code-2" rendered="#{not empty openIdConnectView.authCode}"

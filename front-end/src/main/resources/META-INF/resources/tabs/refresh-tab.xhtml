@@ -4,7 +4,7 @@
                 xmlns:p="http://primefaces.org/ui"
                 xmlns:ui="jakarta.faces.facelets">
   <p:tab title="4. Refresh Token">
-    <p:panelGrid id="refresh-panelGrid" columns="1" styleClass="mb-3">
+    <p:panelGrid id="refresh-panelGrid" columns="1" styleClass="mb-3" style="text-align: left;">
       <p:commandButton value="Send Refresh Request"
                        rendered="#{not empty openIdConnectView.tokenResponse}"
                        update="refresh-panelGrid" process="@this"

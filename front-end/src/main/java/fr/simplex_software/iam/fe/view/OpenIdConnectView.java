@@ -41,6 +41,8 @@ public class OpenIdConnectView implements Serializable
   String discoveryEndpoint;
   @ConfigProperty(name = "keycloak.realm")
   String realm;
+  @ConfigProperty(name = "iam-frontend.sandbox-redirect")
+  String sandBoxRedirect;
   private Map<String, Object> discovery;
   private String discoveryJson;
   private boolean showDiscoveryJson;
@@ -163,7 +165,7 @@ public class OpenIdConnectView implements Serializable
   public Response handleCallback(@QueryParam("code") String code)
   {
     authCode = code;
-    return Response.temporaryRedirect(UriBuilder.fromPath("index.xhtml")
+    return Response.temporaryRedirect(UriBuilder.fromPath(sandBoxRedirect)
       .queryParam("activeIndex", "1").build()).build();
   }
 
@@ -321,8 +323,9 @@ public class OpenIdConnectView implements Serializable
   {
     handleInputChange();
     ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
-    externalContext.redirect(UriBuilder.fromPath("index.xhtml")
-      .queryParam("activeIndex", "0").build().toString());
+    externalContext.redirect(UriBuilder
+      .fromPath(externalContext.getRequestContextPath() + "/" + sandBoxRedirect)
+      .queryParam("activeIndex", "1").build().toString());
   }
 
   private Map<String, Object> truncateTokens(Map<String, Object> tokens)
