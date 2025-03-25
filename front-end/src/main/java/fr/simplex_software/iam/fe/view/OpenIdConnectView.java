@@ -325,7 +325,7 @@ public class OpenIdConnectView implements Serializable
     ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
     externalContext.redirect(UriBuilder
       .fromPath(externalContext.getRequestContextPath() + "/" + sandBoxRedirect)
-      .queryParam("activeIndex", "1").build().toString());
+      .queryParam("activeIndex", "0").build().toString());
   }
 
   private Map<String, Object> truncateTokens(Map<String, Object> tokens)
