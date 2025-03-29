@@ -5,12 +5,11 @@ import fr.simplex_software.iam.fe.service.*;
 import io.quarkus.runtime.annotations.*;
 import jakarta.enterprise.context.*;
 import jakarta.faces.application.*;
-import jakarta.faces.component.*;
 import jakarta.faces.context.*;
-import jakarta.faces.validator.*;
 import jakarta.inject.*;
 import jakarta.json.*;
 import jakarta.json.bind.*;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.*;
 import org.apache.commons.lang3.*;
@@ -25,31 +24,30 @@ import java.util.*;
 @Named
 @ApplicationScoped
 @RegisterForReflection(serialization = true)
-public class OpenIdConnectView implements Serializable
+@Path("/callback2")
+public class Oauth20View implements Serializable
 {
   @Inject
   Keycloak keycloak;
   @Inject
   FacesContext facesContext;
   @Inject
-  OidcAuthenticationRequest oidcAuthenticationRequest;
+  Oauth20AuthorizationRequest oauth20AuthorizationRequest;
   @Inject
   ClientManager clientManager;
-  @Inject
-  OidcRedirectCallbackService oidcRedirectCallbackService;
   @ConfigProperty(name = "quarkus.oidc.auth-server-url")
   String issuer;
   @ConfigProperty(name = "quarkus.discovery.endpoint")
   String discoveryEndpoint;
   @ConfigProperty(name = "keycloak.realm")
   String realm;
-  @ConfigProperty(name = "iam-frontend.sandbox-redirect")
+  @ConfigProperty(name = "iam-frontend.be-redirect")
   String sandBoxRedirect;
   private Map<String, Object> discovery;
   private String discoveryJson;
   private boolean showDiscoveryJson;
-  private String authenticationRequest;
-  private boolean showAuthenticationRequest;
+  private String authorizationRequest;
+  private boolean showAuthorizationRequest;
   private String formattedAuthRequest;
   private String authCode;
   private String idToken;
@@ -73,9 +71,9 @@ public class OpenIdConnectView implements Serializable
     return showDiscoveryJson;
   }
 
-  public boolean isShowAuthenticationRequest()
+  public boolean isShowAuthorizationRequest()
   {
-    return showAuthenticationRequest;
+    return showAuthorizationRequest;
   }
 
   public String getIssuer()
@@ -88,9 +86,9 @@ public class OpenIdConnectView implements Serializable
     return discoveryJson;
   }
 
-  public String getAuthenticationRequest()
+  public String getAuthorizationRequest()
   {
-    return authenticationRequest;
+    return authorizationRequest;
   }
 
   public void setIssuer(String issuer)
@@ -105,14 +103,12 @@ public class OpenIdConnectView implements Serializable
 
   public String getAuthCode()
   {
-    if (authCode == null)
-      authCode = oidcRedirectCallbackService.getAuthCode();
     return authCode;
   }
 
-  public OidcAuthenticationRequest getOidcAuthenticationRequest()
+  public Oauth20AuthorizationRequest getOauth20AuthorizationRequest()
   {
-    return oidcAuthenticationRequest;
+    return oauth20AuthorizationRequest;
   }
 
   public String getTokenResponse()
@@ -165,15 +161,21 @@ public class OpenIdConnectView implements Serializable
     return formattedTokenRequest;
   }
 
+  @GET
+  public Response handleCallback(@QueryParam("code") String code)
+  {
+    authCode = code;
+    return Response.temporaryRedirect(UriBuilder.fromPath(sandBoxRedirect)
+      .queryParam("activeIndex", "1").build()).build();
+  }
+
   public void loadDiscovery()
   {
     if (StringUtils.isEmpty(discoveryJson))
     {
       discovery = clientManager.getClient().target(issuer + discoveryEndpoint)
         .request(MediaType.APPLICATION_JSON)
-        .get(new GenericType<>()
-        {
-        });
+        .get(new GenericType<>() {});
       discoveryJson = prettyPrintJsonB(discovery);
       showDiscoveryJson = true;
     }
@@ -181,61 +183,39 @@ public class OpenIdConnectView implements Serializable
       showDiscoveryJson = !showDiscoveryJson;
   }
 
-  public void generateAuthenticationRequest()
+  public void generateAuthorizationRequest()
   {
-    System.out.println(">>> generateAuthenticationRequest() client ID: " + oidcAuthenticationRequest.getClientId());
     if (discovery == null || discovery.isEmpty())
     {
       FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
         "Discovery document not loaded", null);
       facesContext.addMessage(null, message);
-      showAuthenticationRequest = false;
+      showAuthorizationRequest = false;
     }
-    else if (StringUtils.isEmpty(authenticationRequest))
+    else if (StringUtils.isEmpty(authorizationRequest))
     {
       String authEndpoint = (String) discovery.get("authorization_endpoint");
-      oidcAuthenticationRequest.setRedirectUri(getRedirectUri());
-      URI authUri = oidcAuthenticationRequest.buildAuthenticationUri(authEndpoint);
-      authenticationRequest = authUri.toString();
+      oauth20AuthorizationRequest.setRedirectUri(getRedirectUri());
+      URI authUri = oauth20AuthorizationRequest.buildAuthorizationUri(authEndpoint);
+      authorizationRequest = authUri.toString();
       formattedAuthRequest = formatRequest(authUri);
-      showAuthenticationRequest = true;
+      showAuthorizationRequest = true;
     }
     else
-      showAuthenticationRequest = !showAuthenticationRequest;
+      showAuthorizationRequest = !showAuthorizationRequest;
   }
 
-  public void validateClientId(FacesContext context, UIComponent component, Object value)
-  {
-    System.out.println(">>> validateClientId() client ID: " + oidcAuthenticationRequest.getClientId());
-    String clientId = (String) value;
-    if (!isClientIdValid(clientId))
-    {
-      throw new ValidatorException(
-        new FacesMessage(FacesMessage.SEVERITY_ERROR,
-          "Invalid Client ID", "The specified Client ID does not exist"));
-    }
-    System.out.println("Client ID validation passed");
-    System.out.println("Context is valid? " + context.isValidationFailed());
-    Iterator<FacesMessage> messages = context.getMessages();
-    while (messages.hasNext()) {
-      FacesMessage msg = messages.next();
-      System.out.println("Message: " + msg.getSummary() + " - " + msg.getDetail());
-    }
-  }
-
-  public void sendAuthenticationRequest() throws IOException
+  public void sendAuthorizationRequest() throws IOException
   {
     ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
-    externalContext.redirect(authenticationRequest);
+    externalContext.redirect(authorizationRequest);
   }
 
   public void sendTokenRequest()
   {
     try (Response response = actionGetTokenResponse())
     {
-      Map<String, Object> map = response.readEntity(new GenericType<>()
-      {
-      });
+      Map<String, Object> map = response.readEntity(new GenericType<>() {});
       idToken = (String) map.get("id_token");
       accessToken = (String) map.get("access_token");
       refreshToken = (String) map.get("refresh_token");
@@ -249,7 +229,7 @@ public class OpenIdConnectView implements Serializable
 
   public Response actionGetTokenResponse()
   {
-    TokenRequest tokenRequest = new TokenRequest(oidcAuthenticationRequest, getAuthCode());
+    TokenRequest tokenRequest = new TokenRequest(oauth20AuthorizationRequest, authCode);
     String tokenEndpoint = (String) discovery.get("token_endpoint");
     formattedTokenRequest = formatRequest(tokenRequest.buildTokenUri(tokenEndpoint));
     return clientManager.getClient().target(tokenEndpoint)
@@ -260,10 +240,9 @@ public class OpenIdConnectView implements Serializable
   public void handleInputChange()
   {
     discoveryJson = null;
-    discovery = null;
     showDiscoveryJson = false;
-    authenticationRequest = null;
-    showAuthenticationRequest = false;
+    authorizationRequest = null;
+    showAuthorizationRequest = false;
     formattedAuthRequest = null;
     authCode = null;
     accessToken = null;
@@ -284,14 +263,8 @@ public class OpenIdConnectView implements Serializable
   private String getRedirectUri()
   {
     return keycloak.realm(realm).clients()
-      .findByClientId(oidcAuthenticationRequest.getClientId())
+      .findByClientId(oauth20AuthorizationRequest.getClientId())
       .getFirst().getRedirectUris().getFirst();
-  }
-
-  private boolean isClientIdValid(String clientId)
-  {
-    return keycloak.realm(realm).clients()
-      .findByClientId(clientId).size() == 1;
   }
 
   public String formatRequest(URI authRequest)
@@ -314,47 +287,6 @@ public class OpenIdConnectView implements Serializable
       }
     }
     return formattedAuthRequest.toString();
-  }
-
-  public void sendRefreshRequest()
-  {
-    RefreshRequest refreshRequest = new RefreshRequest("refresh_token", refreshToken,
-      oidcAuthenticationRequest.getClientId(), oidcAuthenticationRequest.getScope());
-    String tokenEndpoint = (String) discovery.get("token_endpoint");
-    formattedRefreshRequest = formatRequest(refreshRequest.buildTokenUri(tokenEndpoint));
-    try (Response response = clientManager.getClient().target(tokenEndpoint)
-      .request(MediaType.APPLICATION_JSON)
-      .post(Entity.form(refreshRequest.toForm())))
-    {
-      Map<String, Object> map = response.readEntity(new GenericType<>()
-      {
-      });
-      idToken = (String) map.get("id_token");
-      //accessToken = (String) map.get("access_token");
-      refreshToken = (String) map.get("refresh_token");
-      refreshResponse = prettyPrintJsonB(truncateTokens(map));
-      String[] idTokenParts = idToken.split("\\.");
-      refreshPayloadJson = prettyPrintJsonB(new String(Base64.getUrlDecoder().decode(idTokenParts[1]), StandardCharsets.UTF_8));
-    }
-  }
-
-  public void sendUserInfoRequest()
-  {
-    String userInfoEndpoint = (String) discovery.get("userinfo_endpoint");
-    formattedUserInfoRequest = formatRequest(URI.create(userInfoEndpoint));
-    userInfoResponse = prettyPrintJsonB(clientManager.getClient().target(userInfoEndpoint)
-      .request(MediaType.APPLICATION_JSON)
-      .header("Authorization", "Bearer " + accessToken)
-      .get(String.class));
-  }
-
-  public void reset() throws IOException
-  {
-    handleInputChange();
-    ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
-    externalContext.redirect(UriBuilder
-      .fromPath(externalContext.getRequestContextPath() + "/" + sandBoxRedirect)
-      .queryParam("activeIndex", "0").build().toString());
   }
 
   private Map<String, Object> truncateTokens(Map<String, Object> tokens)
@@ -380,4 +312,3 @@ public class OpenIdConnectView implements Serializable
     return jsonb.toJson(jsonb.fromJson(jsonb.toJson(uglyJson), JsonObject.class));
   }
 }
-

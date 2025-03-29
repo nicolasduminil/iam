@@ -7,15 +7,16 @@
     <h:panelGrid id="auth-panelGrid" columns="3" styleClass="mb-3">
       <p:outputLabel for="client-id" value="Client ID:"/>
       <p:inputText id="client-id"
-                   value="#{openIdConnectView.authorizationRequest.clientId}" required="true"
+                   value="#{openIdConnectView.oidcAuthenticationRequest.clientId}" required="true"
                    label="client-id">
+        <f:validateLength minimum="2"/>
         <p:ajax event="keyup" listener="#{openIdConnectView.handleInputChange}"
                 update="auth-panelGrid"/>
       </p:inputText>
-      <p:message for="client-id" display="icon"/>
+      <p:message for="client-id" />
       <p:outputLabel for="scope" value="Scope:"/>
       <p:inputText id="scope"
-                   value="#{openIdConnectView.authorizationRequest.scope}"
+                   value="#{openIdConnectView.oidcAuthenticationRequest.scope}"
                    label="scope">
         <p:ajax event="keyup" listener="#{openIdConnectView.handleInputChange}"
                 update="auth-panelGrid"/>
@@ -23,7 +24,7 @@
       <p:spacer/>
       <p:outputLabel for="prompt" value="Prompt:"/>
       <p:inputText id="prompt"
-                   value="#{openIdConnectView.authorizationRequest.prompt}"
+                   value="#{openIdConnectView.oidcAuthenticationRequest.prompt}"
                    valueChangeListener="#{openIdConnectView.clean}"
                    label="prompt">
         <p:ajax event="keyup" listener="#{openIdConnectView.handleInputChange}"
@@ -32,7 +33,7 @@
       <p:spacer/>
       <p:outputLabel for="max-age" value="Max age:"/>
       <p:inputText id="max-age"
-                   value="#{openIdConnectView.authorizationRequest.maxAge}"
+                   value="#{openIdConnectView.oidcAuthenticationRequest.maxAge}"
                    label="max-age">
         <p:ajax event="keyup" listener="#{openIdConnectView.handleInputChange}"
                 update="auth-panelGrid"/>
@@ -40,7 +41,7 @@
       <p:spacer/>
       <p:outputLabel for="login-hint" value="Login hint:"/>
       <p:inputText id="login-hint" required="false"
-                   value="#{openIdConnectView.authorizationRequest.loginHint}"
+                   value="#{openIdConnectView.oidcAuthenticationRequest.loginHint}"
                    label="login-hint">
         <p:ajax event="keyup" listener="#{openIdConnectView.handleInputChange}"
                 update="auth-panelGrid"/>
@@ -50,7 +51,7 @@
         value="#{empty openIdConnectView.authenticationRequest ?
                 'Generate' : (openIdConnectView.showAuthenticationRequest ?
                 'Hide Request' : 'Show Request')}"
-        update="auth-panelGrid :form:msgs" process="@this"
+        update="auth-panelGrid :form:msgs" process="@form"
         action="#{openIdConnectView.generateAuthenticationRequest}"
         icon="#{empty openIdConnectView.authenticationRequest ?
                 'pi pi-check' : (openIdConnectView.showAuthenticationRequest ?

@@ -33,14 +33,23 @@ public class TokenRequest
     this.redirectUri = redirectUri;
   }
 
-  public TokenRequest(AuthorizationRequest authorizationRequest, String authorizationCode)
+  public TokenRequest(OidcAuthenticationRequest oidcAuthenticationRequest, String authorizationCode)
   {
     this.grantType = "authorization_code";
     this.authorizationCode = authorizationCode;
-    this.scope = authorizationRequest.getScope();
-    this.clientId = authorizationRequest.getClientId();
-    this.redirectUri = authorizationRequest.getRedirectUri();
+    this.scope = oidcAuthenticationRequest.getScope();
+    this.clientId = oidcAuthenticationRequest.getClientId();
+    this.redirectUri = oidcAuthenticationRequest.getRedirectUri();
   }
+
+  public TokenRequest(Oauth20AuthorizationRequest oauth20AuthorizationRequest, String authorizationCode)
+  {
+    this.grantType = "authorization_code";
+    this.authorizationCode = authorizationCode;
+    this.clientId = oauth20AuthorizationRequest.getClientId();
+    this.redirectUri = oauth20AuthorizationRequest.getRedirectUri();
+  }
+
 
   public String getGrantType()
   {

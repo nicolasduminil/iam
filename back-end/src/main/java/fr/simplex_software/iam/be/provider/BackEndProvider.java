@@ -32,7 +32,7 @@ public class BackEndProvider //implements BackEndAPI
   }
 
   @Override
-  public Response sendAuthorizationRequest(AuthorizationRequest authorizationRequest)
+  public Response sendAuthorizationRequest(OidcAuthenticationRequest authorizationRequest)
   {
     System.out.println ("### authorizationUri: " + authorizationRequest.authorizationUri + " client_id " + authorizationRequest.clientId
       + " response_type " + authorizationRequest.responseType + " redirectUri " + authorizationRequest.redirectUri + " scope " + authorizationRequest.scope);

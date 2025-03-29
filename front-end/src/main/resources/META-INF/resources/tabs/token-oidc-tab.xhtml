@@ -12,7 +12,7 @@
                    size="100" label="auth-code"/>
       <p:commandButton value="Send Token Request"
                        rendered="#{not empty openIdConnectView.authenticationRequest and openIdConnectView.showAuthenticationRequest}"
-                       update="token-panelGrid refresh-panelGrid" process="@this"
+                       update="token-panelGrid :form:oidc-tabs:refresh-panelGrid" process="@this"
                        action="#{openIdConnectView.sendTokenRequest()}"
                        icon="#{empty openIdConnectView.authenticationRequest ? 'pi pi-check' : (openIdConnectView.showAuthenticationRequest ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
       <p:outputLabel for="token-request" rendered="#{not empty openIdConnectView.formattedTokenRequest}"
