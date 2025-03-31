@@ -10,7 +10,7 @@
                    value="#{openIdConnectView.oidcAuthenticationRequest.clientId}" required="true"
                    label="client-id">
         <f:validateLength minimum="2"/>
-        <p:ajax event="keyup" listener="#{openIdConnectView.handleInputChange}"
+        <p:ajax event="change" listener="#{openIdConnectView.handleInputChange}"
                 update="auth-panelGrid"/>
       </p:inputText>
       <p:message for="client-id" />
@@ -18,7 +18,7 @@
       <p:inputText id="scope"
                    value="#{openIdConnectView.oidcAuthenticationRequest.scope}"
                    label="scope">
-        <p:ajax event="keyup" listener="#{openIdConnectView.handleInputChange}"
+        <p:ajax event="change" listener="#{openIdConnectView.handleInputChange}"
                 update="auth-panelGrid"/>
       </p:inputText>
       <p:spacer/>
@@ -27,7 +27,7 @@
                    value="#{openIdConnectView.oidcAuthenticationRequest.prompt}"
                    valueChangeListener="#{openIdConnectView.clean}"
                    label="prompt">
-        <p:ajax event="keyup" listener="#{openIdConnectView.handleInputChange}"
+        <p:ajax event="change" listener="#{openIdConnectView.handleInputChange}"
                 update="auth-panelGrid"/>
       </p:inputText>
       <p:spacer/>
@@ -35,7 +35,7 @@
       <p:inputText id="max-age"
                    value="#{openIdConnectView.oidcAuthenticationRequest.maxAge}"
                    label="max-age">
-        <p:ajax event="keyup" listener="#{openIdConnectView.handleInputChange}"
+        <p:ajax event="change" listener="#{openIdConnectView.handleInputChange}"
                 update="auth-panelGrid"/>
       </p:inputText>
       <p:spacer/>
@@ -43,7 +43,7 @@
       <p:inputText id="login-hint" required="false"
                    value="#{openIdConnectView.oidcAuthenticationRequest.loginHint}"
                    label="login-hint">
-        <p:ajax event="keyup" listener="#{openIdConnectView.handleInputChange}"
+        <p:ajax event="change" listener="#{openIdConnectView.handleInputChange}"
                 update="auth-panelGrid"/>
       </p:inputText>
       <p:spacer/>
@@ -51,7 +51,7 @@
         value="#{empty openIdConnectView.authenticationRequest ?
                 'Generate' : (openIdConnectView.showAuthenticationRequest ?
                 'Hide Request' : 'Show Request')}"
-        update="auth-panelGrid :form:msgs" process="@form"
+        update="auth-panelGrid :form:msgs" process="@this client-id"
         action="#{openIdConnectView.generateAuthenticationRequest}"
         icon="#{empty openIdConnectView.authenticationRequest ?
                 'pi pi-check' : (openIdConnectView.showAuthenticationRequest ?
@@ -69,7 +69,7 @@
       </p:outputPanel>
       <p:commandButton value="Send Authentication Request"
                        rendered="#{not empty openIdConnectView.authenticationRequest and openIdConnectView.showAuthenticationRequest}"
-                       update="auth-code-panelGrid" process="@this"
+                       update="auth-code-panelGrid" process="@form auth-panelGrid"
                        action="#{openIdConnectView.sendAuthenticationRequest()}"
                        icon="#{empty openIdConnectView.authenticationRequest ? 'pi pi-check' : (openIdConnectView.showAuthenticationRequest ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
     </h:panelGrid>

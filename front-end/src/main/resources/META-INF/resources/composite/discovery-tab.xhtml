@@ -7,7 +7,7 @@
   xmlns:cc="jakarta.faces.composite">
 
   <cc:interface>
-    <cc:attribute name="discovery-output-value" required="true" type="java.lang.String"/>
+    <cc:attribute name="discoveryOutputValue" required="true" type="java.lang.String"/>
     <cc:attribute name="bean" required="true" type="java.lang.Object"/>
   </cc:interface>
 
@@ -29,7 +29,7 @@
       </h:panelGrid>
       <div style="height: 10px;"></div>
       <p:outputPanel id="discovery-info-id" style="max-height: 20em; max-width: 60em; overflow: auto;">
-        <h:outputLabel for="discovery-id" value="${cc.attrs.discovery-output-value}"
+        <h:outputLabel for="discovery-id" value="#{cc.attrs.discoveryOutputValue}"
                        rendered="#{not empty cc.attrs.bean.discoveryJson and cc.attrs.bean.showDiscoveryJson}"/>
         <div style="height: 10px;"></div>
         <p:inputTextarea id="discovery-id" value="#{cc.attrs.bean.discoveryJson}"

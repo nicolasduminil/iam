@@ -16,7 +16,7 @@
         <p:tabView id="oidc-tabs" activeIndex="#{param.activeIndex}">
           <p:tab title="1. Discovery">
             <my:discovery-tab bean="#{openIdConnectView}"
-                              discovery-output-value="OpenID provider configuration"/>
+                              discoveryOutputValue="OpenID provider configuration"/>
           </p:tab>
           <ui:include src="../tabs/authentication-oidc-tab.xhtml"/>
           <ui:include src="../tabs/token-oidc-tab.xhtml"/>

@@ -3,10 +3,12 @@ package fr.simplex_software.iam.fe.view;
 import fr.simplex_software.iam.domain.schema.*;
 import fr.simplex_software.iam.fe.service.*;
 import io.quarkus.runtime.annotations.*;
+import io.smallrye.config.*;
 import jakarta.enterprise.context.*;
 import jakarta.faces.application.*;
 import jakarta.faces.component.*;
 import jakarta.faces.context.*;
+import jakarta.faces.event.*;
 import jakarta.faces.validator.*;
 import jakarta.inject.*;
 import jakarta.json.*;
@@ -37,6 +39,8 @@ public class OpenIdConnectView implements Serializable
   ClientManager clientManager;
   @Inject
   OidcRedirectCallbackService oidcRedirectCallbackService;
+  @Inject
+  private SmallRyeConfig config;
   @ConfigProperty(name = "quarkus.oidc.auth-server-url")
   String issuer;
   @ConfigProperty(name = "quarkus.discovery.endpoint")
@@ -46,7 +50,7 @@ public class OpenIdConnectView implements Serializable
   @ConfigProperty(name = "iam-frontend.sandbox-redirect")
   String sandBoxRedirect;
   private Map<String, Object> discovery;
-  private String discoveryJson;
+  private String discoveryJson = null;
   private boolean showDiscoveryJson;
   private String authenticationRequest;
   private boolean showAuthenticationRequest;
@@ -217,7 +221,8 @@ public class OpenIdConnectView implements Serializable
     System.out.println("Client ID validation passed");
     System.out.println("Context is valid? " + context.isValidationFailed());
     Iterator<FacesMessage> messages = context.getMessages();
-    while (messages.hasNext()) {
+    while (messages.hasNext())
+    {
       FacesMessage msg = messages.next();
       System.out.println("Message: " + msg.getSummary() + " - " + msg.getDetail());
     }
@@ -257,28 +262,24 @@ public class OpenIdConnectView implements Serializable
       .post(Entity.form(tokenRequest.toForm()));
   }
 
-  public void handleInputChange()
+  public void handleInputChange(AjaxBehaviorEvent event)
   {
-    discoveryJson = null;
-    discovery = null;
-    showDiscoveryJson = false;
-    authenticationRequest = null;
-    showAuthenticationRequest = false;
-    formattedAuthRequest = null;
-    authCode = null;
-    accessToken = null;
-    idToken = null;
-    refreshToken = null;
-    userInfoResponse = null;
-    formattedRefreshRequest = null;
-    refreshResponse = null;
-    refreshPayloadJson = null;
-    formattedTokenRequest = null;
-    headerJson = null;
-    payloadJson = null;
-    idTokenSignature = null;
-    formattedUserInfoRequest = null;
-    tokenResponse = null;
+    UIInput source = (UIInput) event.getSource();
+    String componentId = source.getId();
+    String newValue = (String) source.getValue();
+    String submittedValue = (String) source.getSubmittedValue();
+    String currentValue = getComponentValue(componentId);
+    /*switch(componentId) {
+      case "client-id":
+        // Handle client-id specific logic
+        break;
+      case "scope":
+        // Handle scope specific logic
+        break;
+    }*/
+    System.out.println(">>> handleInputChange(): source " + source + " compoenentId "
+      + componentId + " new value " + newValue + " submittedValue " + submittedValue
+      + " currentValue " + currentValue + " client-id " + oidcAuthenticationRequest.getClientId());
   }
 
   private String getRedirectUri()
@@ -350,7 +351,27 @@ public class OpenIdConnectView implements Serializable
 
   public void reset() throws IOException
   {
-    handleInputChange();
+    discoveryJson = null;
+    discovery = null;
+    showDiscoveryJson = false;
+    authenticationRequest = null;
+    showAuthenticationRequest = false;
+    formattedAuthRequest = null;
+    authCode = null;
+    accessToken = null;
+    idToken = null;
+    refreshToken = null;
+    userInfoResponse = null;
+    formattedRefreshRequest = null;
+    refreshResponse = null;
+    refreshPayloadJson = null;
+    formattedTokenRequest = null;
+    headerJson = null;
+    payloadJson = null;
+    idTokenSignature = null;
+    formattedUserInfoRequest = null;
+    tokenResponse = null;
+    reinitializeOidcAuthenticationRequest();
     ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
     externalContext.redirect(UriBuilder
       .fromPath(externalContext.getRequestContextPath() + "/" + sandBoxRedirect)
@@ -378,6 +399,28 @@ public class OpenIdConnectView implements Serializable
   private String prettyPrintJsonB(Map<String, Object> uglyJson)
   {
     return jsonb.toJson(jsonb.fromJson(jsonb.toJson(uglyJson), JsonObject.class));
+  }
+
+  private String getComponentValue(String componentId)
+  {
+    FacesContext context = FacesContext.getCurrentInstance();
+    final Object[] value = new Object[1];
+    context.getViewRoot().invokeOnComponent(context, componentId,
+      (ctx, target) ->
+      {
+        if (target instanceof UIInput)
+          value[0] = ((UIInput) target).getValue();
+      });
+    return (String) value[0];
+  }
+
+  private void reinitializeOidcAuthenticationRequest()
+  {
+    oidcAuthenticationRequest = new OidcAuthenticationRequest(config.getValue("oauth2.client.id", String.class),
+      config.getValue("oauth2.scope", String.class),
+      Optional.of(config.getValue("oauth2.prompt", String.class)),
+      Optional.of(config.getValue("oauth2.max.age", String.class)),
+      Optional.of(config.getValue("oauth2.login.hint", String.class)));
   }
 }
 

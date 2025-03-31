@@ -39,17 +39,22 @@ public class OidcAuthenticationRequest implements Serializable
   {
   }
 
-  public OidcAuthenticationRequest(String clientId, String redirectUri, String responseType,
-                                   String scope, Optional<String> prompt,
-                                   Optional<String> maxAge, Optional<String> loginHint)
+  public OidcAuthenticationRequest(String clientId, String scope, Optional<String> prompt, Optional<String> maxAge, Optional<String> loginHint)
   {
     this.clientId = clientId;
-    this.redirectUri = redirectUri;
-    this.responseType = responseType;
     this.scope = scope;
     this.prompt = prompt;
     this.maxAge = maxAge;
     this.loginHint = loginHint;
+  }
+
+  public OidcAuthenticationRequest(String clientId, String redirectUri, String responseType,
+                                   String scope, Optional<String> prompt,
+                                   Optional<String> maxAge, Optional<String> loginHint)
+  {
+    this(clientId, scope, prompt, maxAge, loginHint);
+    this.redirectUri = redirectUri;
+    this.responseType = responseType;
   }
 
   public String getScope()
@@ -120,6 +125,21 @@ public class OidcAuthenticationRequest implements Serializable
   public void setResponseType(String responseType)
   {
     this.responseType = responseType;
+  }
+
+  public Optional<String> getPromptOptional()
+  {
+    return prompt;
+  }
+
+  public Optional<String> getMaxAgeOptional()
+  {
+    return maxAge;
+  }
+
+  public Optional<String> getLoginHintOptional()
+  {
+    return loginHint;
   }
 
   public void setPrompt(Optional<String> prompt)
