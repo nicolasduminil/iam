@@ -4,6 +4,7 @@ import fr.simplex_software.iam.domain.schema.*;
 import fr.simplex_software.iam.fe.service.*;
 import io.quarkus.runtime.annotations.*;
 import io.smallrye.config.*;
+import jakarta.el.*;
 import jakarta.enterprise.context.*;
 import jakarta.faces.application.*;
 import jakarta.faces.component.*;
@@ -373,9 +374,14 @@ public class OpenIdConnectView implements Serializable
     tokenResponse = null;
     reinitializeOidcAuthenticationRequest();
     ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
+    String uri = UriBuilder
+      .fromPath(externalContext.getRequestContextPath() + "/" + sandBoxRedirect)
+      .queryParam("activeIndex", "0").build().toString();
+    System.out.println(">>> reset(): Ready to redirect to " + uri);
     externalContext.redirect(UriBuilder
       .fromPath(externalContext.getRequestContextPath() + "/" + sandBoxRedirect)
       .queryParam("activeIndex", "0").build().toString());
+    System.out.println(">>> reset(): Redirect done, showDiscoveryJson " + showDiscoveryJson);
   }
 
   private Map<String, Object> truncateTokens(Map<String, Object> tokens)
@@ -416,11 +422,12 @@ public class OpenIdConnectView implements Serializable
 
   private void reinitializeOidcAuthenticationRequest()
   {
-    oidcAuthenticationRequest = new OidcAuthenticationRequest(config.getValue("oauth2.client.id", String.class),
-      config.getValue("oauth2.scope", String.class),
-      Optional.of(config.getValue("oauth2.prompt", String.class)),
-      Optional.of(config.getValue("oauth2.max.age", String.class)),
-      Optional.of(config.getValue("oauth2.login.hint", String.class)));
+    String loginHint = config.getOptionalValue("oauth2.login.hint", String.class)
+      .orElse("");
+      oidcAuthenticationRequest = new OidcAuthenticationRequest(config.getValue("oauth2.client.id", String.class),
+        config.getValue("oauth2.scope", String.class),
+        config.getOptionalValue("oauth2.prompt", String.class),
+        config.getOptionalValue("oauth2.max.age", String.class),
+        config.getOptionalValue("oauth2.login.hint", String.class));
   }
 }
-

@@ -6,7 +6,7 @@
   <p:tab title="Reset">
     <p:panelGrid id="reset-panelGrid" columns="1" styleClass="mb-3" style="text-align: left;">
       <p:commandButton value="Reset"
-                       update="userinfo-panelGrid reset-panelGrid" process="@this"
+                       update=":form:oidc-tabs:userinfo-panelGrid reset-panelGrid" process="@this"
                        action="#{openIdConnectView.reset()}"
                        icon="pi pi-check"/>
     </p:panelGrid>
