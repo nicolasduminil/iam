@@ -19,6 +19,7 @@ import jakarta.ws.rs.core.*;
 import org.apache.commons.lang3.*;
 import org.eclipse.microprofile.config.inject.*;
 import org.keycloak.admin.client.*;
+import org.keycloak.representations.idm.*;
 
 import java.io.*;
 import java.net.*;
@@ -199,11 +200,22 @@ public class OpenIdConnectView implements Serializable
     else if (StringUtils.isEmpty(authenticationRequest))
     {
       String authEndpoint = (String) discovery.get("authorization_endpoint");
-      oidcAuthenticationRequest.setRedirectUri(getRedirectUri());
-      URI authUri = oidcAuthenticationRequest.buildAuthenticationUri(authEndpoint);
-      authenticationRequest = authUri.toString();
-      formattedAuthRequest = formatRequest(authUri);
-      showAuthenticationRequest = true;
+      String redirectUri = getRedirectUri();
+      if (redirectUri == null)
+      {
+        FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+          "Redirect URI is not set", null);
+        facesContext.addMessage(null, message);
+        showAuthenticationRequest = false;
+      }
+      else
+      {
+        oidcAuthenticationRequest.setRedirectUri(getRedirectUri());
+        URI authUri = oidcAuthenticationRequest.buildAuthenticationUri(authEndpoint);
+        authenticationRequest = authUri.toString();
+        formattedAuthRequest = formatRequest(authUri);
+        showAuthenticationRequest = true;
+      }
     }
     else
       showAuthenticationRequest = !showAuthenticationRequest;
@@ -270,24 +282,43 @@ public class OpenIdConnectView implements Serializable
     String newValue = (String) source.getValue();
     String submittedValue = (String) source.getSubmittedValue();
     String currentValue = getComponentValue(componentId);
-    /*switch(componentId) {
+    switch (componentId)
+    {
       case "client-id":
-        // Handle client-id specific logic
+        oidcAuthenticationRequest.setClientId(newValue);
         break;
       case "scope":
-        // Handle scope specific logic
+        oidcAuthenticationRequest.setScope(newValue);
         break;
-    }*/
-    System.out.println(">>> handleInputChange(): source " + source + " compoenentId "
-      + componentId + " new value " + newValue + " submittedValue " + submittedValue
-      + " currentValue " + currentValue + " client-id " + oidcAuthenticationRequest.getClientId());
+      case "prompt":
+        oidcAuthenticationRequest.setPrompt(newValue);
+        break;
+      case "max-age":
+        oidcAuthenticationRequest.setMaxAge(newValue);
+        break;
+      case "login-hint":
+        oidcAuthenticationRequest.setLoginHint(newValue);
+        break;
+    }
   }
 
   private String getRedirectUri()
   {
-    return keycloak.realm(realm).clients()
-      .findByClientId(oidcAuthenticationRequest.getClientId())
-      .getFirst().getRedirectUris().getFirst();
+    String redirectUri = null;
+    ClientRepresentation clientRepresentation = null;
+    String clientId = oidcAuthenticationRequest.getClientId();
+    try
+    {
+      redirectUri = keycloak.realm(realm).clients()
+        .findByClientId(clientId).getFirst().getRedirectUris().getFirst();
+    }
+    catch (Exception e)
+    {
+      FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+        "There is no Keycloak client with ID %s".formatted(clientId), null);
+      facesContext.addMessage(null, message);
+    }
+    return redirectUri;
   }
 
   private boolean isClientIdValid(String clientId)
@@ -377,11 +408,9 @@ public class OpenIdConnectView implements Serializable
     String uri = UriBuilder
       .fromPath(externalContext.getRequestContextPath() + "/" + sandBoxRedirect)
       .queryParam("activeIndex", "0").build().toString();
-    System.out.println(">>> reset(): Ready to redirect to " + uri);
     externalContext.redirect(UriBuilder
       .fromPath(externalContext.getRequestContextPath() + "/" + sandBoxRedirect)
       .queryParam("activeIndex", "0").build().toString());
-    System.out.println(">>> reset(): Redirect done, showDiscoveryJson " + showDiscoveryJson);
   }
 
   private Map<String, Object> truncateTokens(Map<String, Object> tokens)
@@ -424,10 +453,10 @@ public class OpenIdConnectView implements Serializable
   {
     String loginHint = config.getOptionalValue("oauth2.login.hint", String.class)
       .orElse("");
-      oidcAuthenticationRequest = new OidcAuthenticationRequest(config.getValue("oauth2.client.id", String.class),
-        config.getValue("oauth2.scope", String.class),
-        config.getOptionalValue("oauth2.prompt", String.class),
-        config.getOptionalValue("oauth2.max.age", String.class),
-        config.getOptionalValue("oauth2.login.hint", String.class));
+    oidcAuthenticationRequest = new OidcAuthenticationRequest(config.getValue("oauth2.client.id", String.class),
+      config.getValue("oauth2.scope", String.class),
+      config.getOptionalValue("oauth2.prompt", String.class),
+      config.getOptionalValue("oauth2.max.age", String.class),
+      config.getOptionalValue("oauth2.login.hint", String.class));
   }
 }

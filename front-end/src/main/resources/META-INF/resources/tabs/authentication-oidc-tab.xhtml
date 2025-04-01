@@ -13,7 +13,7 @@
         <p:ajax event="change" listener="#{openIdConnectView.handleInputChange}"
                 update="auth-panelGrid"/>
       </p:inputText>
-      <p:message for="client-id" />
+      <p:message for="client-id" display="icon"/>
       <p:outputLabel for="scope" value="Scope:"/>
       <p:inputText id="scope"
                    value="#{openIdConnectView.oidcAuthenticationRequest.scope}"
@@ -51,7 +51,7 @@
         value="#{empty openIdConnectView.authenticationRequest ?
                 'Generate' : (openIdConnectView.showAuthenticationRequest ?
                 'Hide Request' : 'Show Request')}"
-        update="auth-panelGrid :form:msgs" process="@this client-id"
+        update="auth-panelGrid :form:msgs" process="@this"
         action="#{openIdConnectView.generateAuthenticationRequest}"
         icon="#{empty openIdConnectView.authenticationRequest ?
                 'pi pi-check' : (openIdConnectView.showAuthenticationRequest ?
