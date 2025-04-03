@@ -189,7 +189,6 @@ public class OpenIdConnectView implements Serializable
 
   public void generateAuthenticationRequest()
   {
-    System.out.println(">>> generateAuthenticationRequest() client ID: " + oidcAuthenticationRequest.getClientId());
     if (discovery == null || discovery.isEmpty())
     {
       FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
@@ -200,21 +199,21 @@ public class OpenIdConnectView implements Serializable
     else if (StringUtils.isEmpty(authenticationRequest))
     {
       String authEndpoint = (String) discovery.get("authorization_endpoint");
-      String redirectUri = getRedirectUri();
-      if (redirectUri == null)
+      try
       {
-        FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-          "Redirect URI is not set", null);
-        facesContext.addMessage(null, message);
-        showAuthenticationRequest = false;
-      }
-      else
-      {
-        oidcAuthenticationRequest.setRedirectUri(getRedirectUri());
+        String redirectUri = getRedirectUri();
+        oidcAuthenticationRequest.setRedirectUri(redirectUri);
         URI authUri = oidcAuthenticationRequest.buildAuthenticationUri(authEndpoint);
         authenticationRequest = authUri.toString();
         formattedAuthRequest = formatRequest(authUri);
         showAuthenticationRequest = true;
+      }
+      catch (Exception ex)
+      {
+        FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+          "There is no Keycloak client with ID %s".formatted(oidcAuthenticationRequest.getClientId()), null);
+        facesContext.addMessage(null, message);
+        showAuthenticationRequest = false;
       }
     }
     else
@@ -304,21 +303,8 @@ public class OpenIdConnectView implements Serializable
 
   private String getRedirectUri()
   {
-    String redirectUri = null;
-    ClientRepresentation clientRepresentation = null;
-    String clientId = oidcAuthenticationRequest.getClientId();
-    try
-    {
-      redirectUri = keycloak.realm(realm).clients()
-        .findByClientId(clientId).getFirst().getRedirectUris().getFirst();
-    }
-    catch (Exception e)
-    {
-      FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-        "There is no Keycloak client with ID %s".formatted(clientId), null);
-      facesContext.addMessage(null, message);
-    }
-    return redirectUri;
+    return keycloak.realm(realm).clients()
+      .findByClientId(oidcAuthenticationRequest.getClientId()).getFirst().getRedirectUris().getFirst();
   }
 
   private boolean isClientIdValid(String clientId)
@@ -383,6 +369,7 @@ public class OpenIdConnectView implements Serializable
 
   public void reset() throws IOException
   {
+    System.out.println (">>> Reset entry");
     discoveryJson = null;
     discovery = null;
     showDiscoveryJson = false;
@@ -408,9 +395,7 @@ public class OpenIdConnectView implements Serializable
     String uri = UriBuilder
       .fromPath(externalContext.getRequestContextPath() + "/" + sandBoxRedirect)
       .queryParam("activeIndex", "0").build().toString();
-    externalContext.redirect(UriBuilder
-      .fromPath(externalContext.getRequestContextPath() + "/" + sandBoxRedirect)
-      .queryParam("activeIndex", "0").build().toString());
+    externalContext.redirect(uri);
   }
 
   private Map<String, Object> truncateTokens(Map<String, Object> tokens)
@@ -454,7 +439,9 @@ public class OpenIdConnectView implements Serializable
     String loginHint = config.getOptionalValue("oauth2.login.hint", String.class)
       .orElse("");
     oidcAuthenticationRequest = new OidcAuthenticationRequest(config.getValue("oauth2.client.id", String.class),
+      getRedirectUri(),
       config.getValue("oauth2.scope", String.class),
+      config.getValue("oauth2.response.type", String.class),
       config.getOptionalValue("oauth2.prompt", String.class),
       config.getOptionalValue("oauth2.max.age", String.class),
       config.getOptionalValue("oauth2.login.hint", String.class));

@@ -14,15 +14,25 @@
       <div class="card">
         <h1>OpenID Connect Sandbox</h1>
         <p:tabView id="oidc-tabs" activeIndex="#{param.activeIndex}">
-          <p:tab title="1. Discovery">
-            <my:discovery-tab bean="#{openIdConnectView}"
+          <p:tab id="discovery-tab" title="1. Discovery">
+            <my:discovery-tab id="discovery-tab-component" bean="#{openIdConnectView}"
                               discoveryOutputValue="OpenID provider configuration"/>
           </p:tab>
-          <ui:include src="../tabs/authentication-oidc-tab.xhtml"/>
-          <ui:include src="../tabs/token-oidc-tab.xhtml"/>
-          <ui:include src="../tabs/refresh-oidc-tab.xhtml"/>
-          <ui:include src="../tabs/userinfo-oidc-tab.xhtml"/>
-          <ui:include src="../tabs/reset-oidc-tab.xhtml"/>
+          <p:tab id="authentication-oidc-tab" title="2. Authentication">
+            <ui:include id="include-authentication-oidc-tab" src="../tabs/authentication-oidc-tab.xhtml"/>
+          </p:tab>
+          <p:tab id="token-tab" title="3. ID Token">
+            <ui:include id="include-token-oidc-tab" src="../tabs/token-oidc-tab.xhtml"/>
+          </p:tab>
+          <p:tab id="refresh-tab" title="4. Refresh Token">
+            <ui:include id="include-refresh-oidc-tab" src="../tabs/refresh-oidc-tab.xhtml"/>
+          </p:tab>
+          <p:tab id="userinfo-tab" title="5. UserInfo">
+            <ui:include id="include-userinfo-oidc-tab" src="../tabs/userinfo-oidc-tab.xhtml"/>
+          </p:tab>
+          <p:tab id="reset-tab" title="Reset">
+            <ui:include id="include-reset-oidc-tab" src="../tabs/reset-oidc-tab.xhtml"/>
+          </p:tab>
         </p:tabView>
       </div>
     </h:form>

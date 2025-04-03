@@ -1,15 +1,11 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:f="jakarta.faces.core"
-                xmlns:h="jakarta.faces.html"
                 xmlns:p="http://primefaces.org/ui"
                 xmlns:ui="jakarta.faces.facelets">
-  <p:tab title="Reset">
-    <p:panelGrid id="reset-panelGrid" columns="1" styleClass="mb-3" style="text-align: left;">
-      <p:commandButton value="Reset"
-                       update=":form:oidc-tabs:userinfo-panelGrid reset-panelGrid"
-                       process="@this"
-                       action="#{openIdConnectView.reset()}"
-                       icon="pi pi-check"/>
-    </p:panelGrid>
-  </p:tab>
+  <p:panelGrid columns="1" styleClass="mb-3" style="text-align: left;">
+    <p:commandButton value="Reset"
+                     update=":form:oidc-tabs:refresh-panelGrid :form:oidc-tabs:auth-code-panelGrid"
+                     process="@this"
+                     action="#{openIdConnectView.reset()}"
+                     icon="pi pi-check"/>
+  </p:panelGrid>
 </ui:composition>
