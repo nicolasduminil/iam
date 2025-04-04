@@ -1,6 +1,7 @@
 package fr.simplex_software.iam.fe.view;
 
 import fr.simplex_software.iam.domain.schema.*;
+import fr.simplex_software.iam.fe.exceptions.*;
 import fr.simplex_software.iam.fe.service.*;
 import io.quarkus.runtime.annotations.*;
 import io.smallrye.config.*;
@@ -14,6 +15,7 @@ import jakarta.faces.validator.*;
 import jakarta.inject.*;
 import jakarta.json.*;
 import jakarta.json.bind.*;
+import jakarta.servlet.http.*;
 import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.*;
 import org.apache.commons.lang3.*;
@@ -111,7 +113,7 @@ public class OpenIdConnectView implements Serializable
 
   public String getAuthCode()
   {
-    if (authCode == null)
+    if (authCode == null && showAuthenticationRequest)
       authCode = oidcRedirectCallbackService.getAuthCode();
     return authCode;
   }
@@ -202,16 +204,24 @@ public class OpenIdConnectView implements Serializable
       try
       {
         String redirectUri = getRedirectUri();
+        validateOidcScope();
         oidcAuthenticationRequest.setRedirectUri(redirectUri);
         URI authUri = oidcAuthenticationRequest.buildAuthenticationUri(authEndpoint);
         authenticationRequest = authUri.toString();
         formattedAuthRequest = formatRequest(authUri);
         showAuthenticationRequest = true;
       }
-      catch (Exception ex)
+      catch (NoSuchClientException ex)
       {
         FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
           "There is no Keycloak client with ID %s".formatted(oidcAuthenticationRequest.getClientId()), null);
+        facesContext.addMessage(null, message);
+        showAuthenticationRequest = false;
+      }
+      catch (InvalidScopeException ex)
+      {
+        FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+          "Invalid scope %s".formatted(oidcAuthenticationRequest.getScope()), null);
         facesContext.addMessage(null, message);
         showAuthenticationRequest = false;
       }
@@ -220,30 +230,23 @@ public class OpenIdConnectView implements Serializable
       showAuthenticationRequest = !showAuthenticationRequest;
   }
 
-  public void validateClientId(FacesContext context, UIComponent component, Object value)
-  {
-    System.out.println(">>> validateClientId() client ID: " + oidcAuthenticationRequest.getClientId());
-    String clientId = (String) value;
-    if (!isClientIdValid(clientId))
-    {
-      throw new ValidatorException(
-        new FacesMessage(FacesMessage.SEVERITY_ERROR,
-          "Invalid Client ID", "The specified Client ID does not exist"));
-    }
-    System.out.println("Client ID validation passed");
-    System.out.println("Context is valid? " + context.isValidationFailed());
-    Iterator<FacesMessage> messages = context.getMessages();
-    while (messages.hasNext())
-    {
-      FacesMessage msg = messages.next();
-      System.out.println("Message: " + msg.getSummary() + " - " + msg.getDetail());
-    }
-  }
-
   public void sendAuthenticationRequest() throws IOException
   {
     ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
-    externalContext.redirect(authenticationRequest);
+    HttpServletRequest request = (HttpServletRequest) externalContext.getRequest();
+    try
+    {
+      if (!authenticationRequest.contains("?"))
+        authenticationRequest += "?";
+      else if (!authenticationRequest.endsWith("&"))
+        authenticationRequest += "&";
+      authenticationRequest += "error_page=" + URLEncoder.encode("/login-error.xhtml", "UTF-8");
+      externalContext.redirect(authenticationRequest);
+    }
+    catch (Exception e)
+    {
+      externalContext.redirect(request.getContextPath() + "/system-error.xhtml");
+    }
   }
 
   public void sendTokenRequest()
@@ -301,10 +304,17 @@ public class OpenIdConnectView implements Serializable
     }
   }
 
-  private String getRedirectUri()
+  private String getRedirectUri() throws NoSuchClientException
   {
-    return keycloak.realm(realm).clients()
-      .findByClientId(oidcAuthenticationRequest.getClientId()).getFirst().getRedirectUris().getFirst();
+    try
+    {
+      return keycloak.realm(realm).clients()
+        .findByClientId(oidcAuthenticationRequest.getClientId()).getFirst().getRedirectUris().getFirst();
+    }
+    catch (Exception ex)
+    {
+      throw new NoSuchClientException("");
+    }
   }
 
   private boolean isClientIdValid(String clientId)
@@ -345,11 +355,8 @@ public class OpenIdConnectView implements Serializable
       .request(MediaType.APPLICATION_JSON)
       .post(Entity.form(refreshRequest.toForm())))
     {
-      Map<String, Object> map = response.readEntity(new GenericType<>()
-      {
-      });
+      Map<String, Object> map = response.readEntity(new GenericType<>() {});
       idToken = (String) map.get("id_token");
-      //accessToken = (String) map.get("access_token");
       refreshToken = (String) map.get("refresh_token");
       refreshResponse = prettyPrintJsonB(truncateTokens(map));
       String[] idTokenParts = idToken.split("\\.");
@@ -367,9 +374,8 @@ public class OpenIdConnectView implements Serializable
       .get(String.class));
   }
 
-  public void reset() throws IOException
+  public void reset() throws Exception
   {
-    System.out.println (">>> Reset entry");
     discoveryJson = null;
     discovery = null;
     showDiscoveryJson = false;
@@ -392,10 +398,9 @@ public class OpenIdConnectView implements Serializable
     tokenResponse = null;
     reinitializeOidcAuthenticationRequest();
     ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
-    String uri = UriBuilder
+    externalContext.redirect(UriBuilder
       .fromPath(externalContext.getRequestContextPath() + "/" + sandBoxRedirect)
-      .queryParam("activeIndex", "0").build().toString();
-    externalContext.redirect(uri);
+      .queryParam("activeIndex", "0").build().toString());
   }
 
   private Map<String, Object> truncateTokens(Map<String, Object> tokens)
@@ -434,16 +439,27 @@ public class OpenIdConnectView implements Serializable
     return (String) value[0];
   }
 
-  private void reinitializeOidcAuthenticationRequest()
+  private void reinitializeOidcAuthenticationRequest() throws NoSuchClientException
   {
     String loginHint = config.getOptionalValue("oauth2.login.hint", String.class)
       .orElse("");
     oidcAuthenticationRequest = new OidcAuthenticationRequest(config.getValue("oauth2.client.id", String.class),
       getRedirectUri(),
-      config.getValue("oauth2.scope", String.class),
       config.getValue("oauth2.response.type", String.class),
+      config.getOptionalValue("oauth2.scope", String.class),
       config.getOptionalValue("oauth2.prompt", String.class),
       config.getOptionalValue("oauth2.max.age", String.class),
       config.getOptionalValue("oauth2.login.hint", String.class));
+  }
+
+  private void validateOidcScope() throws InvalidScopeException
+  {
+    if (oidcAuthenticationRequest.getScope() != null)
+    {
+      List<ClientScopeRepresentation> allRealmScopes = keycloak.realm(realm).clientScopes().findAll();
+      if (allRealmScopes != null)
+        if (!allRealmScopes.stream().map(ClientScopeRepresentation::getName).toList().contains(oidcAuthenticationRequest.getScope()))
+          throw new InvalidScopeException("");
+    }
   }
 }

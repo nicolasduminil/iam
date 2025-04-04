@@ -7,42 +7,41 @@
     <p:outputLabel for="client-id" value="Client ID:"/>
     <p:inputText id="client-id"
                  value="#{openIdConnectView.oidcAuthenticationRequest.clientId}" required="true"
+                 valueChangeListener="#{openIdConnectView.handleInputChange}"
                  label="client-id">
-      <p:ajax event="change" listener="#{openIdConnectView.handleInputChange}"
-              update="auth-panelGrid"/>
+      <p:ajax update="auth-panelGrid"/>
     </p:inputText>
     <p:message for="client-id" display="icon"/>
     <p:outputLabel for="scope" value="Scope:"/>
     <p:inputText id="scope"
                  value="#{openIdConnectView.oidcAuthenticationRequest.scope}"
+                 valueChangeListener="#{openIdConnectView.handleInputChange}"
                  label="scope">
-      <p:ajax event="change" listener="#{openIdConnectView.handleInputChange}"
-              update="auth-panelGrid"/>
+      <p:ajax update="auth-panelGrid"/>
     </p:inputText>
     <p:spacer/>
     <p:outputLabel for="prompt" value="Prompt:"/>
     <p:inputText id="prompt"
                  value="#{openIdConnectView.oidcAuthenticationRequest.prompt}"
-                 valueChangeListener="#{openIdConnectView.clean}"
+                 valueChangeListener="#{openIdConnectView.handleInputChange}"
                  label="prompt">
-      <p:ajax event="change" listener="#{openIdConnectView.handleInputChange}"
-              update="auth-panelGrid"/>
+      <p:ajax update="auth-panelGrid"/>
     </p:inputText>
     <p:spacer/>
     <p:outputLabel for="max-age" value="Max age:"/>
     <p:inputText id="max-age"
                  value="#{openIdConnectView.oidcAuthenticationRequest.maxAge}"
+                 valueChangeListener="#{openIdConnectView.handleInputChange}"
                  label="max-age">
-      <p:ajax event="change" listener="#{openIdConnectView.handleInputChange}"
-              update="auth-panelGrid"/>
+      <p:ajax update="auth-panelGrid"/>
     </p:inputText>
     <p:spacer/>
     <p:outputLabel for="login-hint" value="Login hint:"/>
     <p:inputText id="login-hint" required="false"
                  value="#{openIdConnectView.oidcAuthenticationRequest.loginHint}"
+                 valueChangeListener="#{openIdConnectView.handleInputChange}"
                  label="login-hint">
-      <p:ajax event="change" listener="#{openIdConnectView.handleInputChange}"
-              update="auth-panelGrid"/>
+      <p:ajax update="auth-panelGrid"/>
     </p:inputText>
     <p:spacer/>
   </h:panelGrid>

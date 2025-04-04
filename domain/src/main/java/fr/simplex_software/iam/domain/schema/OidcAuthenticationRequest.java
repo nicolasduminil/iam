@@ -23,9 +23,9 @@ public class OidcAuthenticationRequest implements Serializable
   @WithName("client.responseType")
   @WithDefault("code")
   private String responseType;
-  @Schema(required = true)
+  @Schema
   @WithDefault("openid")
-  private String scope;
+  private Optional<String> scope;
   @Schema
   private Optional<String> prompt;
   @Schema
@@ -39,7 +39,7 @@ public class OidcAuthenticationRequest implements Serializable
   {
   }
 
-  public OidcAuthenticationRequest(String clientId, String scope, Optional<String> prompt, Optional<String> maxAge, Optional<String> loginHint)
+  public OidcAuthenticationRequest(String clientId, Optional<String> scope, Optional<String> prompt, Optional<String> maxAge, Optional<String> loginHint)
   {
     this.clientId = clientId;
     this.scope = scope;
@@ -49,7 +49,7 @@ public class OidcAuthenticationRequest implements Serializable
   }
 
   public OidcAuthenticationRequest(String clientId, String redirectUri, String responseType,
-                                   String scope, Optional<String> prompt,
+                                   Optional<String> scope, Optional<String> prompt,
                                    Optional<String> maxAge, Optional<String> loginHint)
   {
     this(clientId, scope, prompt, maxAge, loginHint);
@@ -59,12 +59,12 @@ public class OidcAuthenticationRequest implements Serializable
 
   public String getScope()
   {
-    return scope;
+    return scope.orElse(null);
   }
 
   public void setScope(String scope)
   {
-    this.scope = scope;
+    this.scope = Optional.of(scope);
   }
 
   public String getPrompt()
@@ -157,13 +157,23 @@ public class OidcAuthenticationRequest implements Serializable
     this.loginHint = loginHint;
   }
 
+  public Optional<String> getScopeOptional()
+  {
+    return scope;
+  }
+
+  public void setScope(Optional<String> scope)
+  {
+    this.scope = scope;
+  }
+
   public URI buildAuthenticationUri(String authorizationEndpoint)
   {
     UriBuilder builder = UriBuilder.fromUri(authorizationEndpoint)
       .queryParam("client_id", clientId)
       .queryParam("response_type", responseType)
-      .queryParam("scope", scope)
       .queryParam("redirect_uri", redirectUri);
+    scope.ifPresent(s -> builder.queryParam("scope", s));
     prompt.ifPresent(p -> builder.queryParam("prompt", p));
     maxAge.ifPresent(m -> builder.queryParam("max_age", m));
     loginHint.ifPresent(h -> builder.queryParam("login_hint", h));
