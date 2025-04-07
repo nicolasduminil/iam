@@ -1,56 +1,38 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:f="jakarta.faces.core"
                 xmlns:h="jakarta.faces.html"
                 xmlns:p="http://primefaces.org/ui"
-                xmlns:ui="jakarta.faces.facelets">
+                xmlns:ui="jakarta.faces.facelets" xmlns:f="http://java.sun.com/jsf/core">
   <h:panelGrid id="auth-panelGrid" columns="3" styleClass="mb-3">
     <p:outputLabel for="client-id" value="Client ID:"/>
     <p:inputText id="client-id"
-                 value="#{openIdConnectView.oidcAuthenticationRequest.clientId}" required="true"
-                 valueChangeListener="#{openIdConnectView.handleInputChange}"
-                 label="client-id">
-      <p:ajax update="auth-panelGrid"/>
-    </p:inputText>
+                 value="#{openIdConnectView.oidcAuthenticationRequest.clientId}" required="true"/>
     <p:message for="client-id" display="icon"/>
     <p:outputLabel for="scope" value="Scope:"/>
     <p:inputText id="scope"
-                 value="#{openIdConnectView.oidcAuthenticationRequest.scope}"
-                 valueChangeListener="#{openIdConnectView.handleInputChange}"
-                 label="scope">
-      <p:ajax update="auth-panelGrid"/>
-    </p:inputText>
+                 value="#{openIdConnectView.oidcAuthenticationRequest.scope}"/>
     <p:spacer/>
     <p:outputLabel for="prompt" value="Prompt:"/>
     <p:inputText id="prompt"
-                 value="#{openIdConnectView.oidcAuthenticationRequest.prompt}"
-                 valueChangeListener="#{openIdConnectView.handleInputChange}"
-                 label="prompt">
-      <p:ajax update="auth-panelGrid"/>
-    </p:inputText>
+                 value="#{openIdConnectView.oidcAuthenticationRequest.prompt}"/>
     <p:spacer/>
     <p:outputLabel for="max-age" value="Max age:"/>
     <p:inputText id="max-age"
-                 value="#{openIdConnectView.oidcAuthenticationRequest.maxAge}"
-                 valueChangeListener="#{openIdConnectView.handleInputChange}"
-                 label="max-age">
-      <p:ajax update="auth-panelGrid"/>
+                 value="#{openIdConnectView.oidcAuthenticationRequest.maxAge}">
+      <f:validateLongRange minimum="0"/>
     </p:inputText>
     <p:spacer/>
     <p:outputLabel for="login-hint" value="Login hint:"/>
-    <p:inputText id="login-hint" required="false"
-                 value="#{openIdConnectView.oidcAuthenticationRequest.loginHint}"
-                 valueChangeListener="#{openIdConnectView.handleInputChange}"
-                 label="login-hint">
-      <p:ajax update="auth-panelGrid"/>
-    </p:inputText>
+    <p:inputText id="login-hint"
+                 value="#{openIdConnectView.oidcAuthenticationRequest.loginHint}"/>
     <p:spacer/>
   </h:panelGrid>
-  <h:panelGrid id="auth-req-pg">
+  <h:panelGrid id="auth-req-pg" columns="3">
     <p:commandButton
       value="#{empty openIdConnectView.authenticationRequest ?
                 'Generate' : (openIdConnectView.showAuthenticationRequest ?
                 'Hide Request' : 'Show Request')}"
-      update="auth-panelGrid auth-req-pg :form:msgs" process="@this"
+      update="auth-panelGrid auth-req-pg :form:msgs"
+      process="@this auth-panelGrid"
       action="#{openIdConnectView.generateAuthenticationRequest}"
       icon="#{empty openIdConnectView.authenticationRequest ?
                 'pi pi-check' : (openIdConnectView.showAuthenticationRequest ?

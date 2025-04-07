@@ -37,7 +37,7 @@ public class Oauth20View implements Serializable
   ClientManager clientManager;
   @ConfigProperty(name = "quarkus.oidc.auth-server-url")
   String issuer;
-  @ConfigProperty(name = "quarkus.discovery.endpoint")
+  @ConfigProperty(name = "keycloak.discovery.endpoint")
   String discoveryEndpoint;
   @ConfigProperty(name = "keycloak.realm")
   String realm;

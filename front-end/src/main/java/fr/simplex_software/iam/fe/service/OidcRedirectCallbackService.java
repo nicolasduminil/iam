@@ -23,18 +23,22 @@ public class OidcRedirectCallbackService
                                  @QueryParam("error_description") String errorDescription)
   {
     Response response = null;
-    if (error != null) {
-      switch (error) {
+    if (error != null)
+    {
+      switch (error)
+      {
         case "access_denied":
           response = Response.temporaryRedirect(UriBuilder.fromPath(errorRedirect)
             .queryParam("error", "access_denied")
             .queryParam("message", "Access was denied")
             .build()).build();
+          break;
         case "invalid_request":
           response = Response.temporaryRedirect(UriBuilder.fromPath(errorRedirect)
             .queryParam("error", "invalid_request")
             .queryParam("message", errorDescription)
             .build()).build();
+          break;
         default:
           response = Response.temporaryRedirect(UriBuilder.fromPath(errorRedirect)
             .queryParam("error", "unknown_error")
@@ -42,9 +46,12 @@ public class OidcRedirectCallbackService
             .build()).build();
       }
     }
-    authCode = code;
-    response = Response.temporaryRedirect(UriBuilder.fromPath(sandBoxRedirect)
-      .queryParam("activeIndex", "1").build()).build();
+    else
+    {
+      authCode = code;
+      response = Response.temporaryRedirect(UriBuilder.fromPath(sandBoxRedirect)
+        .queryParam("activeIndex", "1").build()).build();
+    }
     return response;
   }
 

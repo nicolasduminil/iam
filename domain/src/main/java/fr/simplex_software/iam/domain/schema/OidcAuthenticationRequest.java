@@ -64,7 +64,7 @@ public class OidcAuthenticationRequest implements Serializable
 
   public void setScope(String scope)
   {
-    this.scope = Optional.of(scope);
+    this.scope = Optional.ofNullable(scope);
   }
 
   public String getPrompt()
@@ -74,7 +74,7 @@ public class OidcAuthenticationRequest implements Serializable
 
   public void setPrompt(String prompt)
   {
-    this.prompt = Optional.of(prompt);
+    this.prompt = Optional.ofNullable(prompt);
   }
 
   public String getMaxAge()
@@ -84,7 +84,7 @@ public class OidcAuthenticationRequest implements Serializable
 
   public void setMaxAge(String maxAge)
   {
-    this.maxAge = Optional.of(maxAge);
+    this.maxAge = Optional.ofNullable(maxAge);
   }
 
   public String getLoginHint()
@@ -94,7 +94,7 @@ public class OidcAuthenticationRequest implements Serializable
 
   public void setLoginHint(String loginHint)
   {
-    this.loginHint = Optional.of(loginHint);
+    this.loginHint = Optional.ofNullable(loginHint);
   }
 
   public String getClientId()

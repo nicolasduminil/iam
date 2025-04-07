@@ -44,10 +44,10 @@ public class OpenIdConnectView implements Serializable
   @Inject
   OidcRedirectCallbackService oidcRedirectCallbackService;
   @Inject
-  private SmallRyeConfig config;
+  SmallRyeConfig config;
   @ConfigProperty(name = "quarkus.oidc.auth-server-url")
   String issuer;
-  @ConfigProperty(name = "quarkus.discovery.endpoint")
+  @ConfigProperty(name = "keycloak.discovery.endpoint")
   String discoveryEndpoint;
   @ConfigProperty(name = "keycloak.realm")
   String realm;
@@ -249,14 +249,14 @@ public class OpenIdConnectView implements Serializable
     }
   }
 
-  public void sendTokenRequest()
+  public void sendTokenRequest() throws InvalidTokenException
   {
     try (Response response = actionGetTokenResponse())
     {
-      Map<String, Object> map = response.readEntity(new GenericType<>()
-      {
-      });
+      Map<String, Object> map = response.readEntity(new GenericType<>() {});
       idToken = (String) map.get("id_token");
+      if (idToken == null)
+        throw new InvalidTokenException("id_token is null");
       accessToken = (String) map.get("access_token");
       refreshToken = (String) map.get("refresh_token");
       String[] idTokenParts = idToken.split("\\.");
@@ -264,6 +264,12 @@ public class OpenIdConnectView implements Serializable
       payloadJson = prettyPrintJsonB(new String(Base64.getUrlDecoder().decode(idTokenParts[1]), StandardCharsets.UTF_8));
       idTokenSignature = idTokenParts[2];
       tokenResponse = prettyPrintJsonB(truncateTokens(map));
+    }
+    catch (InvalidTokenException e)
+    {
+      FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+        e.getMessage(), null);
+      facesContext.addMessage(null, message);
     }
   }
 
