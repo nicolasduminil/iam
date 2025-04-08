@@ -27,6 +27,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.*;
 import java.util.*;
+import java.util.stream.*;
 
 @Named
 @ApplicationScoped
@@ -460,12 +461,21 @@ public class OpenIdConnectView implements Serializable
 
   private void validateOidcScope() throws InvalidScopeException
   {
-    if (oidcAuthenticationRequest.getScope() != null)
-    {
-      List<ClientScopeRepresentation> allRealmScopes = keycloak.realm(realm).clientScopes().findAll();
-      if (allRealmScopes != null)
-        if (!allRealmScopes.stream().map(ClientScopeRepresentation::getName).toList().contains(oidcAuthenticationRequest.getScope()))
-          throw new InvalidScopeException("");
-    }
+    if (oidcAuthenticationRequest.getScope() == null || oidcAuthenticationRequest.getScope().trim().isEmpty())
+      throw new InvalidScopeException("Scope cannot be empty");
+    String requestedScopeString = oidcAuthenticationRequest.getScope();
+    Set<String> requestedScopes = new HashSet<>(Arrays.asList(requestedScopeString.split(" ")));
+    if (!requestedScopes.contains("openid"))
+      throw new InvalidScopeException("'openid' scope is required for OIDC authentication");
+    List<ClientScopeRepresentation> allRealmScopes = keycloak.realm(realm).clientScopes().findAll();
+    Set<String> availableScopes = allRealmScopes != null ?
+      allRealmScopes.stream().map(ClientScopeRepresentation::getName).collect(Collectors.toSet())
+      : new HashSet<>();
+    Optional<String> invalidScope = requestedScopes.stream()
+      .filter(scope -> !"openid".equals(scope))
+      .filter(scope -> !availableScopes.contains(scope))
+      .findFirst();
+    if (invalidScope.isPresent())
+      throw new InvalidScopeException("Invalid scope: " + invalidScope.get());
   }
 }
