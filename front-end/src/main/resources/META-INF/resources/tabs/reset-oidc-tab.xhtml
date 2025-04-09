@@ -1,7 +1,7 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:p="http://primefaces.org/ui"
                 xmlns:ui="jakarta.faces.facelets">
-  <p:panelGrid columns="1" styleClass="mb-3" style="text-align: left;">
+  <p:panelGrid columns="1" styleClass="mb-3" cellpadding="7" style="text-align: left;">
     <p:commandButton value="Reset"
                      update=":form:oidc-tabs:refresh-panelGrid :form:oidc-tabs:auth-code-panelGrid"
                      process="@this"

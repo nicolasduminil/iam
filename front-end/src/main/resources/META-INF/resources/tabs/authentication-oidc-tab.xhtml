@@ -2,7 +2,7 @@
                 xmlns:h="jakarta.faces.html"
                 xmlns:p="http://primefaces.org/ui"
                 xmlns:ui="jakarta.faces.facelets" xmlns:f="http://java.sun.com/jsf/core">
-  <h:panelGrid id="auth-panelGrid" columns="3" styleClass="mb-3">
+  <h:panelGrid id="auth-panelGrid" columns="3" cellpadding="7" styleClass="mb-3">
     <p:outputLabel for="client-id" value="Client ID:"/>
     <p:inputText id="client-id"
                  value="#{openIdConnectView.oidcAuthenticationRequest.clientId}" required="true"/>
@@ -26,7 +26,7 @@
                  value="#{openIdConnectView.oidcAuthenticationRequest.loginHint}"/>
     <p:spacer/>
   </h:panelGrid>
-  <h:panelGrid id="auth-req-pg" columns="3">
+  <h:panelGrid id="auth-req-pg" columns="3" cellpadding="7" styleClass="mb-3">
     <p:commandButton
       value="#{empty openIdConnectView.authenticationRequest ?
                 'Generate' : (openIdConnectView.showAuthenticationRequest ?
@@ -54,7 +54,7 @@
                      action="#{openIdConnectView.sendAuthenticationRequest()}"
                      icon="#{empty openIdConnectView.authenticationRequest ? 'pi pi-check' : (openIdConnectView.showAuthenticationRequest ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
   </h:panelGrid>
-  <h:panelGrid id="auth-code-panelGrid" columns="2" styleClass="mb-3"
+  <h:panelGrid id="auth-code-panelGrid" columns="2" cellpadding="7" styleClass="mb-3"
                columnClasses="width: 20%; vertical-align: top;, width: 80%;"
                rendered="#{not empty openIdConnectView.authCode}">
     <p:outputLabel for="auth-code" rendered="#{not empty openIdConnectView.authCode}"
