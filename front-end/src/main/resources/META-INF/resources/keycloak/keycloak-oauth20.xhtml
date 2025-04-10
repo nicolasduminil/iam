@@ -17,6 +17,11 @@
               <my:discovery-tab bean="#{openIdConnectView}"
                                 discoveryOutputValue="OAuth 2.0 provider configuration"/>
             </p:tab>
+            <p:tab id="authentication-oidc-tab" title="2. Authorization">
+              <ui:include id="include-authentication-oidc-tab" src="../tabs/authentication-oidc-tab.xhtml">
+                <ui:param name="oidc" value="false"></ui:param>
+              </ui:include>
+            </p:tab>
           </p:tabView>
         </div>
       </h:form>

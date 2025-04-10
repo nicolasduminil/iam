@@ -11,19 +11,22 @@
     <p:inputText id="scope"
                  value="#{openIdConnectView.oidcAuthenticationRequest.scope}"/>
     <p:spacer/>
-    <p:outputLabel for="prompt" value="Prompt:"/>
+    <p:outputLabel for="prompt" value="Prompt:" rendered="#{oidc}"/>
     <p:inputText id="prompt"
-                 value="#{openIdConnectView.oidcAuthenticationRequest.prompt}"/>
+                 value="#{openIdConnectView.oidcAuthenticationRequest.prompt}"
+                 rendered="#{oidc}"/>
     <p:spacer/>
-    <p:outputLabel for="max-age" value="Max age:"/>
+    <p:outputLabel for="max-age" value="Max age:" rendered="#{oidc}"/>
     <p:inputText id="max-age"
-                 value="#{openIdConnectView.oidcAuthenticationRequest.maxAge}">
+                 value="#{openIdConnectView.oidcAuthenticationRequest.maxAge}"
+                 rendered="#{oidc}">
       <f:validateLongRange minimum="0"/>
     </p:inputText>
     <p:spacer/>
-    <p:outputLabel for="login-hint" value="Login hint:"/>
+    <p:outputLabel for="login-hint" value="Login hint:" rendered="#{oidc}"/>
     <p:inputText id="login-hint"
-                 value="#{openIdConnectView.oidcAuthenticationRequest.loginHint}"/>
+                 value="#{openIdConnectView.oidcAuthenticationRequest.loginHint}"
+                 rendered="#{oidc}"/>
     <p:spacer/>
   </h:panelGrid>
   <h:panelGrid id="auth-req-pg" columns="3" cellpadding="7" styleClass="mb-3">
