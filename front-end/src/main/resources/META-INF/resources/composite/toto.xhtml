@@ -1,0 +1,79 @@
+<ui:component
+  xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:ui="jakarta.faces.facelets"
+  xmlns:h="jakarta.faces.html"
+  xmlns:f="jakarta.faces.core"
+  xmlns:p="http://primefaces.org/ui"
+  xmlns:cc="jakarta.faces.composite">
+
+  <cc:interface>
+    <cc:attribute name="oidc" required="true" type="java.lang.Boolean"/>
+    <cc:attribute name="bean" required="true" type="java.lang.Object"/>
+  </cc:interface>
+
+  <cc:implementation>
+    <h:panelGrid id="auth-panelGrid" columns="3" cellpadding="7" styleClass="mb-3">
+      <p:outputLabel for="client-id" value="Client ID:"/>
+      <p:inputText id="client-id"
+                   value="#{cc.attrs.bean.oidcAuthenticationRequest.clientId}" required="true"/>
+      <p:message for="client-id" display="icon"/>
+      <p:outputLabel for="scope" value="Scope:"/>
+      <p:inputText id="scope"
+                   value="#{cc.attrs.bean.oidcAuthenticationRequest.scope}"/>
+      <p:spacer/>
+      <p:panel id="params-id" rendered="#{cc.attrs.oidc}">
+        <p:outputLabel for="prompt" value="Prompt:"/>
+        <p:inputText id="prompt"
+                     value="#{cc.attrs.bean.oidcAuthenticationRequest.prompt}"/>
+        <p:spacer/>
+        <p:outputLabel for="max-age" value="Max age:"/>
+        <p:inputText id="max-age"
+                     value="#{cc.attrs.bean.oidcAuthenticationRequest.maxAge}">
+          <f:validateLongRange minimum="0"/>
+        </p:inputText>
+        <p:spacer/>
+        <p:outputLabel for="login-hint" value="Login hint:"/>
+        <p:inputText id="login-hint"
+                     value="#{cc.attrs.bean.oidcAuthenticationRequest.loginHint}"/>
+        <p:spacer/>
+      </p:panel>
+    </h:panelGrid>
+    <h:panelGrid id="auth-req-pg" columns="3" cellpadding="7" styleClass="mb-3">
+      <p:commandButton
+        value="#{empty cc.attrs.bean.authenticationRequest ?
+                'Generate' : (cc.attrs.bean.showAuthenticationRequest ?
+                'Hide Request' : 'Show Request')}"
+        update="auth-panelGrid auth-req-pg :form:msgs"
+        process="@this auth-panelGrid"
+        action="#{cc.attrs.bean.generateAuthenticationRequest}"
+        icon="#{empty cc.attrs.bean.authenticationRequest ?
+                'pi pi-check' : (cc.attrs.bean.showAuthenticationRequest ?
+                'pi pi-eye-slash' : 'pi pi-eye')}"/>
+      <div style="height: 10px;"></div>
+      <p:outputPanel id="authentication-request-panel"
+                     style="max-height: 20em; max-width: 60em; overflow: auto;">
+        <h:outputLabel for="authentication-request" value="Authentication request: "
+                       rendered="#{not empty cc.attrs.bean.authenticationRequest and cc.attrs.bean.showAuthenticationRequest}"/>
+        <div style="height: 10px;"></div>
+        <p:inputTextarea id="authentication-request" value="#{cc.attrs.bean.formattedAuthRequest}"
+                         readonly="true" autoResize="false" rows="5" cols="60"
+                         style="width: 100%; height: 100%; border: 1px solid #ccc;"
+                         rendered="#{not empty cc.attrs.bean.formattedAuthRequest and cc.attrs.bean.showAuthenticationRequest}"/>
+      </p:outputPanel>
+      <p:commandButton value="Send Authentication Request"
+                       rendered="#{not empty cc.attrs.bean.authenticationRequest and cc.attrs.bean.showAuthenticationRequest}"
+                       update="auth-code-panelGrid" process="@this"
+                       action="#{cc.attrs.bean.sendAuthenticationRequest()}"
+                       icon="#{empty cc.attrs.bean.authenticationRequest ? 'pi pi-check' : (cc.attrs.bean.showAuthenticationRequest ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
+    </h:panelGrid>
+    <h:panelGrid id="auth-code-panelGrid" columns="2" cellpadding="7" styleClass="mb-3"
+                 columnClasses="width: 20%; vertical-align: top;, width: 80%;"
+                 rendered="#{not empty cc.attrs.bean.authCode}">
+      <p:outputLabel for="auth-code" rendered="#{not empty cc.attrs.bean.authCode}"
+                     value="Authentication response:"/>
+      <p:inputText id="auth-code" rendered="#{not empty cc.attrs.bean.authCode}"
+                   value="#{cc.attrs.bean.authCode}" readonly="true"
+                   size="100" label="auth-code"/>
+    </h:panelGrid>
+  </cc:implementation>
+</ui:component>

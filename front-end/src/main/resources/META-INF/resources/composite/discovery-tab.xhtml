@@ -12,30 +12,30 @@
   </cc:interface>
 
   <cc:implementation>
-      <h:panelGrid columns="1" cellpadding="7" styleClass="mb-3">
-        <p:outputLabel for="issuer-uri-id" value="Issuer URI:"/>
-        <p:inputText id="issuer-uri-id" size="40" maxlength="255"
-                     value="#{cc.attrs.bean.issuer}" required="true"
-                     label="issuer-uri-id">
-          <f:validateLength minimum="30"/>
-        </p:inputText>
-        <p:message id="msgs-id" for="issuer-uri-id" display="icon"/>
-        <p:commandButton
-          value="#{empty cc.attrs.bean.discoveryJson ? 'Discover' : (cc.attrs.bean.showDiscoveryJson ? 'Hide Details' : 'Show Details')}"
-          update="@form :form:msgs"
-          process="@this issuer-uri-id"
-          action="#{cc.attrs.bean.loadDiscovery}"
-          icon="#{empty cc.attrs.bean.discoveryJson ? 'pi pi-check' : (cc.attrs.bean.showDiscoveryJson ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
-      </h:panelGrid>
+    <h:panelGrid columns="1" cellpadding="7" styleClass="mb-3">
+      <p:outputLabel for="issuer-uri-id" value="Issuer URI:"/>
+      <p:inputText id="issuer-uri-id" size="40" maxlength="255"
+                   value="#{cc.attrs.bean.issuer}" required="true"
+                   label="issuer-uri-id">
+        <f:validateLength minimum="30"/>
+      </p:inputText>
+      <p:message id="msgs-id" for="issuer-uri-id" display="icon"/>
+      <p:commandButton
+        value="#{empty cc.attrs.bean.discoveryJson ? 'Discover' : (cc.attrs.bean.showDiscoveryJson ? 'Hide Details' : 'Show Details')}"
+        update="@form :form:msgs"
+        process="@this issuer-uri-id"
+        action="#{cc.attrs.bean.loadDiscovery}"
+        icon="#{empty cc.attrs.bean.discoveryJson ? 'pi pi-check' : (cc.attrs.bean.showDiscoveryJson ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
+    </h:panelGrid>
+    <div style="height: 10px;"></div>
+    <p:outputPanel id="discovery-info-id" style="max-height: 20em; max-width: 60em; overflow: auto;">
+      <h:outputLabel for="discovery-id" value="#{cc.attrs.discoveryOutputValue}"
+                     rendered="#{not empty cc.attrs.bean.discoveryJson and cc.attrs.bean.showDiscoveryJson}"/>
       <div style="height: 10px;"></div>
-      <p:outputPanel id="discovery-info-id" style="max-height: 20em; max-width: 60em; overflow: auto;">
-        <h:outputLabel for="discovery-id" value="#{cc.attrs.discoveryOutputValue}"
+      <p:inputTextarea id="discovery-id" value="#{cc.attrs.bean.discoveryJson}"
+                       readonly="true" autoResize="false" rows="10" cols="30"
+                       style="width: 100%; height: 100%; border: 1px solid #ccc;"
                        rendered="#{not empty cc.attrs.bean.discoveryJson and cc.attrs.bean.showDiscoveryJson}"/>
-        <div style="height: 10px;"></div>
-        <p:inputTextarea id="discovery-id" value="#{cc.attrs.bean.discoveryJson}"
-                         readonly="true" autoResize="false" rows="10" cols="30"
-                         style="width: 100%; height: 100%; border: 1px solid #ccc;"
-                         rendered="#{not empty cc.attrs.bean.discoveryJson and cc.attrs.bean.showDiscoveryJson}"/>
-      </p:outputPanel>
+    </p:outputPanel>
   </cc:implementation>
 </ui:component>
