@@ -27,8 +27,8 @@
         icon="#{empty cc.attrs.bean.discoveryJson ? 'pi pi-check' : (cc.attrs.bean.showDiscoveryJson ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
     </h:panelGrid>
     <div style="height: 10px;"></div>
-    <p:outputPanel for="@next" style="max-height: 20em; max-width: 60em; overflow: auto;">
-      <h:outputLabel for="discovery-id" value="#{cc.attrs.discoveryOutputValue}"
+    <p:outputPanel style="max-height: 20em; max-width: 60em; overflow: auto;">
+      <p:outputLabel for="@next" value="#{cc.attrs.discoveryOutputValue}"
                      rendered="#{not empty cc.attrs.bean.discoveryJson and cc.attrs.bean.showDiscoveryJson}"/>
       <div style="height: 10px;"></div>
       <p:inputTextarea value="#{cc.attrs.bean.discoveryJson}"

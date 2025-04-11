@@ -1,23 +1,22 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:p="http://primefaces.org/ui"
                 xmlns:ui="jakarta.faces.facelets">
-  <p:panelGrid id="userinfo-panelGrid" columns="1" cellpadding="7" styleClass="mb-3" style="text-align: left;">
+  <p:panelGrid columns="1" cellpadding="7" styleClass="mb-3" style="text-align: left;">
     <p:commandButton value="Send UserInfo Request"
                      rendered="#{not empty openIdConnectView.authenticationRequest}"
-                     update="userinfo-panelGrid" process="@this"
+                     update="@parent" process="@this"
                      action="#{openIdConnectView.sendUserInfoRequest()}"
                      icon="pi pi-check"/>
-    <p:outputLabel for="userinfo-request" rendered="#{not empty openIdConnectView.formattedUserInfoRequest}"
+    <p:outputLabel for="@next" rendered="#{not empty openIdConnectView.formattedUserInfoRequest}"
                    value="UserInfo request:"/>
-    <p:inputText id="userinfo-request" rendered="#{not empty openIdConnectView.formattedUserInfoRequest}"
+    <p:inputText rendered="#{not empty openIdConnectView.formattedUserInfoRequest}"
                  value="#{openIdConnectView.formattedUserInfoRequest}" readonly="true"
                  label="userinfo-request" size="60"/>
-    <p:outputLabel for="userinfo-response" rendered="#{not empty openIdConnectView.userInfoResponse}"
+    <p:outputLabel for="@next" rendered="#{not empty openIdConnectView.userInfoResponse}"
                    value="UserInfo response:"/>
-    <p:inputTextarea id="userinfo-response" rendered="#{not empty openIdConnectView.userInfoResponse}"
+    <p:inputTextarea rendered="#{not empty openIdConnectView.userInfoResponse}"
                      autoResize="false" rows="5" cols="30"
                      style="width: 25%; height: 100%; border: 1px solid #ccc;"
-                     value="#{openIdConnectView.userInfoResponse}" readonly="true"
-                     label="token-header"/>
+                     value="#{openIdConnectView.userInfoResponse}" readonly="true"/>
   </p:panelGrid>
 </ui:composition>

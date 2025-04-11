@@ -3,7 +3,7 @@
                 xmlns:ui="jakarta.faces.facelets">
   <p:panelGrid columns="1" styleClass="mb-3" cellpadding="7" style="text-align: left;">
     <p:commandButton value="Reset"
-                     update=":form:oidc-tabs:refresh-panelGrid :form:oidc-tabs:auth-code-panelGrid"
+                     update=":form:oidc-tabs:@child(3) :form:oidc-tabs:@child(2)"
                      process="@this"
                      action="#{openIdConnectView.reset()}"
                      icon="pi pi-check"/>

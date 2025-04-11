@@ -2,67 +2,61 @@
                 xmlns:h="jakarta.faces.html"
                 xmlns:p="http://primefaces.org/ui"
                 xmlns:ui="jakarta.faces.facelets" xmlns:f="http://java.sun.com/jsf/core">
-  <h:panelGrid id="auth-panelGrid" columns="3" cellpadding="7" styleClass="mb-3">
-    <p:outputLabel for="client-id" value="Client ID:"/>
-    <p:inputText id="client-id"
-                 value="#{openIdConnectView.oidcAuthenticationRequest.clientId}" required="true"/>
-    <p:message for="client-id" display="icon"/>
-    <p:outputLabel for="scope" value="Scope:"/>
-    <p:inputText id="scope"
-                 value="#{openIdConnectView.oidcAuthenticationRequest.scope}"/>
+  <h:panelGrid columns="3" cellpadding="7" styleClass="mb-3">
+    <p:outputLabel for="@next" value="Client ID:"/>
+    <p:inputText value="#{openIdConnectView.oidcAuthenticationRequest.clientId}" required="true"/>
+    <p:message for="@previous" display="icon"/>
+    <p:outputLabel for="@next" value="Scope:"/>
+    <p:inputText value="#{openIdConnectView.oidcAuthenticationRequest.scope}"/>
     <p:spacer/>
-    <p:outputLabel for="prompt" value="Prompt:" rendered="#{oidc}"/>
-    <p:inputText id="prompt"
-                 value="#{openIdConnectView.oidcAuthenticationRequest.prompt}"
+    <p:outputLabel for="@next" value="Prompt:" rendered="#{oidc}"/>
+    <p:inputText value="#{openIdConnectView.oidcAuthenticationRequest.prompt}"
                  rendered="#{oidc}"/>
     <p:spacer/>
-    <p:outputLabel for="max-age" value="Max age:" rendered="#{oidc}"/>
-    <p:inputText id="max-age"
-                 value="#{openIdConnectView.oidcAuthenticationRequest.maxAge}"
+    <p:outputLabel for="@next" value="Max age:" rendered="#{oidc}"/>
+    <p:inputText value="#{openIdConnectView.oidcAuthenticationRequest.maxAge}"
                  rendered="#{oidc}">
       <f:validateLongRange minimum="0"/>
     </p:inputText>
     <p:spacer/>
-    <p:outputLabel for="login-hint" value="Login hint:" rendered="#{oidc}"/>
-    <p:inputText id="login-hint"
-                 value="#{openIdConnectView.oidcAuthenticationRequest.loginHint}"
+    <p:outputLabel for="@next" value="Login hint:" rendered="#{oidc}"/>
+    <p:inputText value="#{openIdConnectView.oidcAuthenticationRequest.loginHint}"
                  rendered="#{oidc}"/>
     <p:spacer/>
   </h:panelGrid>
-  <h:panelGrid id="auth-req-pg" columns="3" cellpadding="7" styleClass="mb-3">
+  <h:panelGrid columns="3" cellpadding="7" styleClass="mb-3">
     <p:commandButton
       value="#{empty openIdConnectView.authenticationRequest ?
                 'Generate' : (openIdConnectView.showAuthenticationRequest ?
                 'Hide Request' : 'Show Request')}"
-      update="auth-panelGrid auth-req-pg :form:msgs"
-      process="@this auth-panelGrid"
+      update="@this @parent:@child(2) sendButton :form:msgs"
+      process="@this @parent:@previous"
       action="#{openIdConnectView.generateAuthenticationRequest}"
       icon="#{empty openIdConnectView.authenticationRequest ?
                 'pi pi-check' : (openIdConnectView.showAuthenticationRequest ?
                 'pi pi-eye-slash' : 'pi pi-eye')}"/>
-    <div style="height: 10px;"></div>
-    <p:outputPanel id="authentication-request-panel"
-                   style="max-height: 20em; max-width: 60em; overflow: auto;">
-      <h:outputLabel for="authentication-request" value="Authentication request: "
+    <h:panelGroup style="height: 10px;"/>
+    <p:panel style="max-height: 20em; max-width: 60em; overflow: auto;">
+      <p:outputLabel for="@next" value="Authentication request: "
                      rendered="#{not empty openIdConnectView.authenticationRequest and openIdConnectView.showAuthenticationRequest}"/>
-      <div style="height: 10px;"></div>
-      <p:inputTextarea id="authentication-request" value="#{openIdConnectView.formattedAuthRequest}"
+      <h:panelGroup style="height: 10px;"/>
+      <p:inputTextarea value="#{openIdConnectView.formattedAuthRequest}"
                        readonly="true" autoResize="false" rows="5" cols="60"
                        style="width: 100%; height: 100%; border: 1px solid #ccc;"
                        rendered="#{not empty openIdConnectView.formattedAuthRequest and openIdConnectView.showAuthenticationRequest}"/>
-    </p:outputPanel>
-    <p:commandButton value="Send Authentication Request"
+    </p:panel>
+    <p:commandButton id="sendButton" value="Send Authentication Request"
                      rendered="#{not empty openIdConnectView.authenticationRequest and openIdConnectView.showAuthenticationRequest}"
-                     update="auth-code-panelGrid" process="@this"
+                     update="@parent:@parent:@next" process="@this"
                      action="#{openIdConnectView.sendAuthenticationRequest()}"
                      icon="#{empty openIdConnectView.authenticationRequest ? 'pi pi-check' : (openIdConnectView.showAuthenticationRequest ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
   </h:panelGrid>
-  <h:panelGrid id="auth-code-panelGrid" columns="2" cellpadding="7" styleClass="mb-3"
+  <h:panelGrid columns="2" cellpadding="7" styleClass="mb-3"
                columnClasses="width: 20%; vertical-align: top;, width: 80%;"
                rendered="#{not empty openIdConnectView.authCode}">
-    <p:outputLabel for="auth-code" rendered="#{not empty openIdConnectView.authCode}"
+    <p:outputLabel for="@next" rendered="#{not empty openIdConnectView.authCode}"
                    value="Authentication response:"/>
-    <p:inputText id="auth-code" rendered="#{not empty openIdConnectView.authCode}"
+    <p:inputText rendered="#{not empty openIdConnectView.authCode}"
                  value="#{openIdConnectView.authCode}" readonly="true"
                  size="100" label="auth-code"/>
   </h:panelGrid>

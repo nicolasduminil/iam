@@ -3,32 +3,29 @@
                 xmlns:h="jakarta.faces.html"
                 xmlns:p="http://primefaces.org/ui"
                 xmlns:ui="jakarta.faces.facelets">
-  <p:panelGrid id="refresh-panelGrid" columns="1" cellpadding="7" styleClass="mb-3" style="text-align: left;">
+  <p:panelGrid columns="1" cellpadding="7" styleClass="mb-3" style="text-align: left;">
     <p:commandButton value="Send Refresh Request"
                      rendered="#{not empty openIdConnectView.tokenResponse}"
-                     update="refresh-panelGrid" process="@this"
+                     update="@parent" process="@this"
                      action="#{openIdConnectView.sendRefreshRequest()}"
                      icon="pi pi-check"/>
-    <p:outputLabel for="refresh-request" rendered="#{not empty openIdConnectView.formattedRefreshRequest}"
+    <p:outputLabel for="@next" rendered="#{not empty openIdConnectView.formattedRefreshRequest}"
                    value="Refresh request:"/>
-    <p:inputTextarea id="refresh-request" rendered="#{not empty openIdConnectView.formattedRefreshRequest}"
+    <p:inputTextarea rendered="#{not empty openIdConnectView.formattedRefreshRequest}"
                      autoResize="false" rows="5" cols="30"
                      style="width: 25%; height: 100%; border: 1px solid #ccc;"
-                     value="#{openIdConnectView.formattedRefreshRequest}" readonly="true"
-                     label="refresh-request"/>
-    <p:outputLabel for="refresh-response" rendered="#{not empty openIdConnectView.refreshResponse}"
+                     value="#{openIdConnectView.formattedRefreshRequest}" readonly="true"/>
+    <p:outputLabel for="@next" rendered="#{not empty openIdConnectView.refreshResponse}"
                    value="Refresh response:"/>
-    <p:inputTextarea id="refresh-response" rendered="#{not empty openIdConnectView.refreshResponse}"
+    <p:inputTextarea rendered="#{not empty openIdConnectView.refreshResponse}"
                      autoResize="false" rows="5" cols="30"
                      style="width: 25%; height: 100%; border: 1px solid #ccc;"
-                     value="#{openIdConnectView.refreshResponse}" readonly="true"
-                     label="token-header"/>
-    <p:outputLabel for="refresh-payload" rendered="#{not empty openIdConnectView.refreshPayloadJson}"
+                     value="#{openIdConnectView.refreshResponse}" readonly="true"/>
+    <p:outputLabel for="@next" rendered="#{not empty openIdConnectView.refreshPayloadJson}"
                    value="ID Token payload:"/>
-    <p:inputTextarea id="refresh-payload" rendered="#{not empty openIdConnectView.refreshPayloadJson}"
+    <p:inputTextarea rendered="#{not empty openIdConnectView.refreshPayloadJson}"
                      autoResize="false" rows="5" cols="30"
                      style="width: 25%; height: 100%; border: 1px solid #ccc;"
-                     value="#{openIdConnectView.refreshPayloadJson}" readonly="true"
-                     label="refresh-payload"/>
+                     value="#{openIdConnectView.refreshPayloadJson}" readonly="true"/>
   </p:panelGrid>
 </ui:composition>
