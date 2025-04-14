@@ -6,6 +6,7 @@ import org.eclipse.microprofile.openapi.annotations.media.*;
 
 import java.net.*;
 import java.util.*;
+import java.util.ArrayList;
 
 @Schema(description = "The token request metadata")
 public class TokenRequest
@@ -17,7 +18,7 @@ public class TokenRequest
   @JsonbProperty("client_id")
   private String clientId;
   @JsonbProperty("scope")
-  private List<String> scopes;
+  private List<String> scopes = new ArrayList<>();
   @JsonbProperty("redirect_uri")
   private String redirectUri;
 

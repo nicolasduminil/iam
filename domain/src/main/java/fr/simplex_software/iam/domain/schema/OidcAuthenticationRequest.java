@@ -176,6 +176,8 @@ public class OidcAuthenticationRequest implements Serializable
 
   public URI buildAuthenticationUri(String authorizationEndpoint)
   {
+    if (!scopes.contains("opedid"))
+      scopes.add("openid");
     UriBuilder builder = UriBuilder.fromUri(authorizationEndpoint)
       .queryParam("client_id", clientId)
       .queryParam("response_type", responseType)

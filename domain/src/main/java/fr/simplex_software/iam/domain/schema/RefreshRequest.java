@@ -6,6 +6,7 @@ import org.eclipse.microprofile.openapi.annotations.media.*;
 
 import java.net.*;
 import java.util.*;
+import java.util.ArrayList;
 
 @Schema(description = "The refresh request metadata")
 public class RefreshRequest
@@ -17,7 +18,7 @@ public class RefreshRequest
   @JsonbProperty("client_id")
   private String clientId;
   @JsonbProperty("scope")
-  private List<String> scopes;
+  private List<String> scopes = new ArrayList<>();
 
   public RefreshRequest()
   {

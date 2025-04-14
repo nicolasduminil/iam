@@ -13,9 +13,6 @@
   </h:head>
   <h:body style="margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column;">
     <h:form id="navForm" style="flex: 1 0 auto;">
-      <p:remoteCommand name="resizeWindowOnLoad"
-                       oncomplete="resizeWindow()"
-                       autoRun="true"/>
       <ui:insert name="menu">
         <p:menubar id="navBar">
           <p:menuitem id="home" value="Home" url="/index.xhtml"/>
@@ -28,7 +25,7 @@
       </ui:insert>
       <h1>Welcome to the Keycloak Sandbox</h1>
       <p:panel style="margin: 0; height: 100%;">
-        <h:panelGrid columns="2" style="width: 100%;">
+        <h:panelGrid columns="2" style="width: 50%;">
           <h:graphicImage value="/img/simplex.png" alt="Simplex logo"/>
           <div>
             <p>
@@ -77,15 +74,6 @@
           href="http://www.simplex-software.fr">Simplex Software</a></span>
       </p>
     </div>
-    <h:outputScript>
-      function resizeWindow() {
-        var contentHeight = document.body.scrollHeight;
-        var contentWidth = document.body.scrollWidth;
-        window.resizeTo(contentWidth + 20, contentHeight + 40);
-        window.moveTo((screen.width - contentWidth) / 2,
-          (screen.height - contentHeight) / 2);
-      }
-    </h:outputScript>
   </h:body>
 </f:view>
 </html>
