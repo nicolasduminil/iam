@@ -5,6 +5,7 @@ import jakarta.ws.rs.core.*;
 import org.eclipse.microprofile.openapi.annotations.media.*;
 
 import java.net.*;
+import java.util.*;
 
 @Schema(description = "The token request metadata")
 public class TokenRequest
@@ -16,19 +17,31 @@ public class TokenRequest
   @JsonbProperty("client_id")
   private String clientId;
   @JsonbProperty("scope")
-  private String scope;
+  private List<String> scopes;
   @JsonbProperty("redirect_uri")
   private String redirectUri;
 
   public TokenRequest()
   {
+    scopes.add("openid");
   }
 
-  public TokenRequest(String grantType, String authorizationCode, String clientId, String scope, String redirectUri)
+  public TokenRequest(String grantType, String authorizationCode, String clientId, String redirectUri)
   {
+    this();
     this.grantType = grantType;
     this.authorizationCode = authorizationCode;
-    this.scope = scope;
+    this.clientId = clientId;
+    this.redirectUri = redirectUri;
+  }
+
+
+  public TokenRequest(String grantType, String authorizationCode, String clientId, List<String> scopes, String redirectUri)
+  {
+    this();
+    this.grantType = grantType;
+    this.authorizationCode = authorizationCode;
+    this.scopes.addAll(scopes);
     this.clientId = clientId;
     this.redirectUri = redirectUri;
   }
@@ -37,7 +50,7 @@ public class TokenRequest
   {
     this.grantType = "authorization_code";
     this.authorizationCode = authorizationCode;
-    this.scope = oidcAuthenticationRequest.getScope();
+    this.scopes.addAll(oidcAuthenticationRequest.getScopes());
     this.clientId = oidcAuthenticationRequest.getClientId();
     this.redirectUri = oidcAuthenticationRequest.getRedirectUri();
   }
@@ -66,9 +79,9 @@ public class TokenRequest
     return redirectUri;
   }
 
-  public String getScope()
+  public List<String> getScope()
   {
-    return scope;
+    return Collections.unmodifiableList(scopes);
   }
 
   public URI buildTokenUri(String tokenEndpoint)
@@ -77,7 +90,7 @@ public class TokenRequest
       .queryParam("grant_type", grantType)
       .queryParam("code", authorizationCode.substring(0, 10) + "...")
       .queryParam("client_id", clientId)
-      .queryParam("scope", scope)
+      .queryParam("scope", String.join(" ", scopes))
       .queryParam("redirect_uri", redirectUri);
     return builder.build();
   }
@@ -88,7 +101,7 @@ public class TokenRequest
       .param("grant_type", this.getGrantType())
       .param("code", this.authorizationCode)
       .param("client_id", this.getClientId())
-      .param("scope", this.getScope())
+      .param("scope", String.join(" ", scopes))
       .param("redirect_uri", this.getRedirectUri());
   }
 }

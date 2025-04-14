@@ -9,7 +9,7 @@
                  size="100"/>
     <p:commandButton value="Send Token Request"
                      rendered="#{not empty openIdConnectView.authenticationRequest and openIdConnectView.showAuthenticationRequest}"
-                     update="@parent :form:oidc-tabs:@child(3) :form:msgs"
+                     update="@parent :form:oidc-tabs:refresh-tab:@child(0) :form:msgs"
                      process="@this"
                      action="#{openIdConnectView.sendTokenRequest()}"
                      icon="#{empty openIdConnectView.authenticationRequest ? 'pi pi-check' : (openIdConnectView.showAuthenticationRequest ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>

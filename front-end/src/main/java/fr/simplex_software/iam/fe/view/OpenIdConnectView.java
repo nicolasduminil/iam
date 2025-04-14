@@ -205,7 +205,7 @@ public class OpenIdConnectView implements Serializable
       try
       {
         String redirectUri = getRedirectUri();
-        validateOidcScope();
+        //validateOidcScope();
         oidcAuthenticationRequest.setRedirectUri(redirectUri);
         URI authUri = oidcAuthenticationRequest.buildAuthenticationUri(authEndpoint);
         authenticationRequest = authUri.toString();
@@ -219,13 +219,13 @@ public class OpenIdConnectView implements Serializable
         facesContext.addMessage(null, message);
         showAuthenticationRequest = false;
       }
-      catch (InvalidScopeException ex)
+      /*catch (InvalidScopeException ex)
       {
         FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-          "Invalid scope %s".formatted(oidcAuthenticationRequest.getScope()), null);
+          "Invalid scope %s".formatted(String.join(" ", oidcAuthenticationRequest.getScopes())), null);
         facesContext.addMessage(null, message);
         showAuthenticationRequest = false;
-      }
+      }*/
     }
     else
       showAuthenticationRequest = !showAuthenticationRequest;
@@ -284,33 +284,6 @@ public class OpenIdConnectView implements Serializable
       .post(Entity.form(tokenRequest.toForm()));
   }
 
-  public void handleInputChange(AjaxBehaviorEvent event)
-  {
-    UIInput source = (UIInput) event.getSource();
-    String componentId = source.getId();
-    String newValue = (String) source.getValue();
-    String submittedValue = (String) source.getSubmittedValue();
-    String currentValue = getComponentValue(componentId);
-    switch (componentId)
-    {
-      case "client-id":
-        oidcAuthenticationRequest.setClientId(newValue);
-        break;
-      case "scope":
-        oidcAuthenticationRequest.setScope(newValue);
-        break;
-      case "prompt":
-        oidcAuthenticationRequest.setPrompt(newValue);
-        break;
-      case "max-age":
-        oidcAuthenticationRequest.setMaxAge(newValue);
-        break;
-      case "login-hint":
-        oidcAuthenticationRequest.setLoginHint(newValue);
-        break;
-    }
-  }
-
   private String getRedirectUri() throws NoSuchClientException
   {
     try
@@ -355,7 +328,7 @@ public class OpenIdConnectView implements Serializable
   public void sendRefreshRequest()
   {
     RefreshRequest refreshRequest = new RefreshRequest("refresh_token", refreshToken,
-      oidcAuthenticationRequest.getClientId(), oidcAuthenticationRequest.getScope());
+      oidcAuthenticationRequest.getClientId(), oidcAuthenticationRequest.getScopes());
     String tokenEndpoint = (String) discovery.get("token_endpoint");
     formattedRefreshRequest = formatRequest(refreshRequest.buildTokenUri(tokenEndpoint));
     try (Response response = clientManager.getClient().target(tokenEndpoint)
@@ -410,6 +383,20 @@ public class OpenIdConnectView implements Serializable
       .queryParam("activeIndex", "0").build().toString());
   }
 
+  public List<String> getRealmScopes()
+  {
+    return keycloak.realm(realm).clientScopes().
+      findAll().stream().map(ClientScopeRepresentation::getName)
+      .collect(Collectors.toList());
+  }
+
+  public List<String> getRealmClients()
+  {
+    return keycloak.realm(realm).clients()
+      .findAll().stream().map(ClientRepresentation::getClientId)
+      .collect(Collectors.toList());
+  }
+
   private Map<String, Object> truncateTokens(Map<String, Object> tokens)
   {
     Map<String, Object> truncatedTokens = new HashMap<>();
@@ -453,7 +440,8 @@ public class OpenIdConnectView implements Serializable
     oidcAuthenticationRequest = new OidcAuthenticationRequest(config.getValue("oauth2.client.id", String.class),
       getRedirectUri(),
       config.getValue("oauth2.response.type", String.class),
-      config.getOptionalValue("oauth2.scope", String.class),
+      Arrays.stream(config.getValue("oauth2.scope", String.class)
+        .split("\\s+")).toList(),
       config.getOptionalValue("oauth2.prompt", String.class),
       config.getOptionalValue("oauth2.max.age", String.class),
       config.getOptionalValue("oauth2.login.hint", String.class));
@@ -461,10 +449,9 @@ public class OpenIdConnectView implements Serializable
 
   private void validateOidcScope() throws InvalidScopeException
   {
-    if (oidcAuthenticationRequest.getScope() == null || oidcAuthenticationRequest.getScope().trim().isEmpty())
+    List<String> requestedScopes = oidcAuthenticationRequest.getScopes();
+    if (requestedScopes == null || requestedScopes.isEmpty())
       throw new InvalidScopeException("Scope cannot be empty");
-    String requestedScopeString = oidcAuthenticationRequest.getScope();
-    Set<String> requestedScopes = new HashSet<>(Arrays.asList(requestedScopeString.split(" ")));
     if (!requestedScopes.contains("openid"))
       throw new InvalidScopeException("'openid' scope is required for OIDC authentication");
     List<ClientScopeRepresentation> allRealmScopes = keycloak.realm(realm).clientScopes().findAll();

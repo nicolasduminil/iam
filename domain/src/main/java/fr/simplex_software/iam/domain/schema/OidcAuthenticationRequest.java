@@ -1,6 +1,7 @@
 package fr.simplex_software.iam.domain.schema;
 
 import io.smallrye.config.*;
+import jakarta.enterprise.context.*;
 import jakarta.ws.rs.core.*;
 import org.eclipse.microprofile.openapi.annotations.media.*;
 
@@ -25,7 +26,7 @@ public class OidcAuthenticationRequest implements Serializable
   private String responseType;
   @Schema
   @WithDefault("openid")
-  private Optional<String> scope;
+  private List<String> scopes = new ArrayList<>();
   @Schema
   private Optional<String> prompt;
   @Schema
@@ -37,34 +38,50 @@ public class OidcAuthenticationRequest implements Serializable
 
   public OidcAuthenticationRequest()
   {
+    this.scopes.add("openid");
   }
 
-  public OidcAuthenticationRequest(String clientId, Optional<String> scope, Optional<String> prompt, Optional<String> maxAge, Optional<String> loginHint)
+  public OidcAuthenticationRequest(String clientId, Optional<String> prompt, Optional<String> maxAge, Optional<String> loginHint)
   {
+    this();
     this.clientId = clientId;
-    this.scope = scope;
+    this.prompt = prompt;
+    this.maxAge = maxAge;
+    this.loginHint = loginHint;
+  }
+
+  public OidcAuthenticationRequest(String clientId, List<String> scopes, Optional<String> prompt, Optional<String> maxAge, Optional<String> loginHint)
+  {
+    this();
+    this.clientId = clientId;
+    this.scopes.addAll(scopes);
     this.prompt = prompt;
     this.maxAge = maxAge;
     this.loginHint = loginHint;
   }
 
   public OidcAuthenticationRequest(String clientId, String redirectUri, String responseType,
-                                   Optional<String> scope, Optional<String> prompt,
+                                   List<String> scopes, Optional<String> prompt,
                                    Optional<String> maxAge, Optional<String> loginHint)
   {
-    this(clientId, scope, prompt, maxAge, loginHint);
+    this(clientId, scopes, prompt, maxAge, loginHint);
     this.redirectUri = redirectUri;
     this.responseType = responseType;
   }
 
-  public String getScope()
+  public List<String> getScopes()
   {
-    return scope.orElse(null);
+    return Collections.unmodifiableList(scopes);
   }
 
-  public void setScope(String scope)
+  public void setScopes(List<String> scopes)
   {
-    this.scope = Optional.ofNullable(scope);
+    this.scopes = new ArrayList<>(scopes);
+  }
+
+  public void addScope(String scope)
+  {
+    this.scopes.add(scope);
   }
 
   public String getPrompt()
@@ -157,23 +174,13 @@ public class OidcAuthenticationRequest implements Serializable
     this.loginHint = loginHint;
   }
 
-  public Optional<String> getScopeOptional()
-  {
-    return scope;
-  }
-
-  public void setScope(Optional<String> scope)
-  {
-    this.scope = scope;
-  }
-
   public URI buildAuthenticationUri(String authorizationEndpoint)
   {
     UriBuilder builder = UriBuilder.fromUri(authorizationEndpoint)
       .queryParam("client_id", clientId)
       .queryParam("response_type", responseType)
-      .queryParam("redirect_uri", redirectUri);
-    scope.ifPresent(s -> builder.queryParam("scope", s));
+      .queryParam("redirect_uri", redirectUri)
+      .queryParam("scope", String.join(" ", scopes));
     prompt.ifPresent(p -> builder.queryParam("prompt", p));
     maxAge.ifPresent(m -> builder.queryParam("max_age", m));
     loginHint.ifPresent(h -> builder.queryParam("login_hint", h));

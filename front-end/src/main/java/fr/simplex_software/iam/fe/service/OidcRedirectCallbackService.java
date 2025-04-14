@@ -36,13 +36,14 @@ public class OidcRedirectCallbackService
         case "invalid_request":
           response = Response.temporaryRedirect(UriBuilder.fromPath(errorRedirect)
             .queryParam("error", "invalid_request")
-            .queryParam("message", errorDescription)
+            .queryParam("message", "An invalid request has been received")
             .build()).build();
           break;
         default:
           response = Response.temporaryRedirect(UriBuilder.fromPath(errorRedirect)
-            .queryParam("error", "unknown_error")
-            .queryParam("message", errorDescription)
+            .queryParam("error", "login_failure")
+            .queryParam("message",
+              "The login has failed. Consider adjusting the\"prompt\" parameter")
             .build()).build();
       }
     }

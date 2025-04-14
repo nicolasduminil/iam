@@ -19,7 +19,7 @@
       <p:message for="client-id" display="icon"/>
       <p:outputLabel for="scope" value="Scope:"/>
       <p:inputText id="scope"
-                   value="#{cc.attrs.bean.oidcAuthenticationRequest.scope}"/>
+                   value="#{cc.attrs.bean.oidcAuthenticationRequest.scopes}"/>
       <p:spacer/>
       <p:panel id="params-id" rendered="#{cc.attrs.oidc}">
         <p:outputLabel for="prompt" value="Prompt:"/>

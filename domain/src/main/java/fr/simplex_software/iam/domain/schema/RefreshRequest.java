@@ -5,6 +5,7 @@ import jakarta.ws.rs.core.*;
 import org.eclipse.microprofile.openapi.annotations.media.*;
 
 import java.net.*;
+import java.util.*;
 
 @Schema(description = "The refresh request metadata")
 public class RefreshRequest
@@ -16,18 +17,28 @@ public class RefreshRequest
   @JsonbProperty("client_id")
   private String clientId;
   @JsonbProperty("scope")
-  private String scope;
+  private List<String> scopes;
 
   public RefreshRequest()
   {
+    scopes.add("openid");
   }
 
-  public RefreshRequest(String grantType, String refreshToken, String clientId, String scope)
+  public RefreshRequest(String grantType, String refreshToken, String clientId)
   {
+    this();
     this.grantType = grantType;
     this.refreshToken = refreshToken;
     this.clientId = clientId;
-    this.scope = scope;
+  }
+
+  public RefreshRequest(String grantType, String refreshToken, String clientId, List<String> scopes)
+  {
+    this();
+    this.grantType = grantType;
+    this.refreshToken = refreshToken;
+    this.clientId = clientId;
+    this.scopes.addAll(scopes);
   }
 
   public String getGrantType()
@@ -45,9 +56,9 @@ public class RefreshRequest
     return clientId;
   }
 
-  public String getScope()
+  public List<String> getScopes()
   {
-    return scope;
+    return Collections.unmodifiableList(scopes);
   }
 
   public URI buildTokenUri(String tokenEndpoint)
@@ -56,7 +67,7 @@ public class RefreshRequest
       .queryParam("grant_type", grantType)
       .queryParam("refresh_token", refreshToken.substring(0, 10) + "...")
       .queryParam("client_id", clientId)
-      .queryParam("scope", scope);
+      .queryParam("scope", String.join(" ", scopes));
     return builder.build();
   }
 
@@ -66,6 +77,6 @@ public class RefreshRequest
       .param("grant_type", this.getGrantType())
       .param("refresh_token", this.refreshToken)
       .param("client_id", this.getClientId())
-      .param("scope", this.getScope());
+      .param("scope", String.join(" ", scopes));
   }
 }
