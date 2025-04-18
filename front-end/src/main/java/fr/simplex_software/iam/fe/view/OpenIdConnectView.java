@@ -5,13 +5,10 @@ import fr.simplex_software.iam.fe.exceptions.*;
 import fr.simplex_software.iam.fe.service.*;
 import io.quarkus.runtime.annotations.*;
 import io.smallrye.config.*;
-import jakarta.el.*;
 import jakarta.enterprise.context.*;
 import jakarta.faces.application.*;
 import jakarta.faces.component.*;
 import jakarta.faces.context.*;
-import jakarta.faces.event.*;
-import jakarta.faces.validator.*;
 import jakarta.inject.*;
 import jakarta.json.*;
 import jakarta.json.bind.*;
@@ -46,6 +43,8 @@ public class OpenIdConnectView implements Serializable
   OidcRedirectCallbackService oidcRedirectCallbackService;
   @Inject
   SmallRyeConfig config;
+  @Inject
+  Oauth20AuthorizationRequest oauth20AuthorizationRequest;
   @ConfigProperty(name = "quarkus.oidc.auth-server-url")
   String issuer;
   @ConfigProperty(name = "keycloak.discovery.endpoint")
@@ -54,11 +53,17 @@ public class OpenIdConnectView implements Serializable
   String realm;
   @ConfigProperty(name = "iam-frontend.sandbox-redirect")
   String sandBoxRedirect;
+  @ConfigProperty(name = "iam-frontend.secured.service.url")
+  String securedServiceUrl;
+  @ConfigProperty(name = "iam-frontend.public.service.url")
+  String publicServiceUrl;
   private Map<String, Object> discovery;
   private String discoveryJson = null;
   private boolean showDiscoveryJson;
   private String authenticationRequest;
   private boolean showAuthenticationRequest;
+  private String authorizationRequest;
+  private boolean showAuthorizationRequest;
   private String formattedAuthRequest;
   private String authCode;
   private String idToken;
@@ -76,6 +81,8 @@ public class OpenIdConnectView implements Serializable
   private String formattedTokenRequest;
   private String accessToken;
   private String refreshToken;
+  private String publicServiceResponse;
+  private String securedServiceResponse;
 
   public boolean isShowDiscoveryJson()
   {
@@ -174,6 +181,43 @@ public class OpenIdConnectView implements Serializable
     return formattedTokenRequest;
   }
 
+  public Oauth20AuthorizationRequest getOauth20AuthorizationRequest()
+  {
+    return oauth20AuthorizationRequest;
+  }
+
+  public String getAuthorizationRequest()
+  {
+    return authorizationRequest;
+  }
+
+  public boolean isShowAuthorizationRequest()
+  {
+    return showAuthorizationRequest;
+  }
+
+  public String getSecuredServiceUrl()
+  {
+    return securedServiceUrl;
+  }
+
+  public String getPublicServiceUrl()
+  {
+    return publicServiceUrl;
+  }
+
+  public String getPublicServiceResponse()
+  {
+    return publicServiceResponse;
+  }
+
+  public String getSecuredServiceResponse()
+  {
+    return securedServiceResponse;
+  }
+
+
+
   public void loadDiscovery()
   {
     if (StringUtils.isEmpty(discoveryJson))
@@ -219,16 +263,42 @@ public class OpenIdConnectView implements Serializable
         facesContext.addMessage(null, message);
         showAuthenticationRequest = false;
       }
-      /*catch (InvalidScopeException ex)
-      {
-        FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-          "Invalid scope %s".formatted(String.join(" ", oidcAuthenticationRequest.getScopes())), null);
-        facesContext.addMessage(null, message);
-        showAuthenticationRequest = false;
-      }*/
     }
     else
       showAuthenticationRequest = !showAuthenticationRequest;
+  }
+
+  public void generateAuthorizationRequest()
+  {
+    if (discovery == null || discovery.isEmpty())
+    {
+      FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+        "Discovery document not loaded", null);
+      facesContext.addMessage(null, message);
+      showAuthorizationRequest = false;
+    }
+    else if (StringUtils.isEmpty(authorizationRequest))
+    {
+      String authEndpoint = (String) discovery.get("authorization_endpoint");
+      try
+      {
+        String redirectUri = getRedirectUri();
+        oauth20AuthorizationRequest.setRedirectUri(redirectUri);
+        URI authUri = oauth20AuthorizationRequest.buildAuthorizationUri(authEndpoint);
+        authorizationRequest = authUri.toString();
+        formattedAuthRequest = formatRequest(authUri);
+        showAuthorizationRequest = true;
+      }
+      catch (NoSuchClientException ex)
+      {
+        FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+          "There is no Keycloak client with ID %s".formatted(oidcAuthenticationRequest.getClientId()), null);
+        facesContext.addMessage(null, message);
+        showAuthenticationRequest = false;
+      }
+    }
+    else
+      showAuthorizationRequest = !showAuthorizationRequest;
   }
 
   public void sendAuthenticationRequest() throws IOException
@@ -243,6 +313,25 @@ public class OpenIdConnectView implements Serializable
         authenticationRequest += "&";
       authenticationRequest += "error_page=" + URLEncoder.encode("/login-error.xhtml", "UTF-8");
       externalContext.redirect(authenticationRequest);
+    }
+    catch (Exception e)
+    {
+      externalContext.redirect(request.getContextPath() + "/system-error.xhtml");
+    }
+  }
+
+  public void sendAuthorizationRequest() throws IOException
+  {
+    ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
+    HttpServletRequest request = (HttpServletRequest) externalContext.getRequest();
+    try
+    {
+      if (!authorizationRequest.contains("?"))
+        authorizationRequest += "?";
+      else if (!authorizationRequest.endsWith("&"))
+        authorizationRequest += "&";
+      authorizationRequest += "error_page=" + URLEncoder.encode("/login-error.xhtml", "UTF-8");
+      externalContext.redirect(authorizationRequest);
     }
     catch (Exception e)
     {
@@ -274,6 +363,27 @@ public class OpenIdConnectView implements Serializable
     }
   }
 
+  public void sendAccessTokenRequest()
+  {
+    try (Response response = actionGetTokenResponse())
+    {
+      Map<String, Object> map = response.readEntity(new GenericType<>() {});
+       accessToken = (String) map.get("access_token");
+      if (accessToken == null)
+        throw new InvalidTokenException("id_token is null");
+      String[] accessTokenParts = accessToken.split("\\.");
+      headerJson = prettyPrintJsonB(new String(Base64.getUrlDecoder().decode(accessTokenParts[0]), StandardCharsets.UTF_8));
+      payloadJson = prettyPrintJsonB(new String(Base64.getUrlDecoder().decode(accessTokenParts[1]), StandardCharsets.UTF_8));
+      tokenResponse = prettyPrintJsonB(truncateTokens(map));
+    }
+    catch (InvalidTokenException e)
+    {
+      FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+        e.getMessage(), null);
+      facesContext.addMessage(null, message);
+    }
+  }
+
   public Response actionGetTokenResponse()
   {
     TokenRequest tokenRequest = new TokenRequest(oidcAuthenticationRequest, getAuthCode());
@@ -282,6 +392,18 @@ public class OpenIdConnectView implements Serializable
     return clientManager.getClient().target(tokenEndpoint)
       .request(MediaType.APPLICATION_JSON)
       .post(Entity.form(tokenRequest.toForm()));
+  }
+
+  public void invokePublicService()
+  {
+    publicServiceResponse = clientManager.getClient()
+      .target(publicServiceUrl).request().get(String.class);
+  }
+
+  public void invokeSecuredService()
+  {
+    securedServiceResponse = clientManager.getClient()
+      .target(securedServiceUrl).request().get(String.class);
   }
 
   private String getRedirectUri() throws NoSuchClientException
@@ -362,6 +484,8 @@ public class OpenIdConnectView implements Serializable
     authenticationRequest = null;
     showAuthenticationRequest = false;
     formattedAuthRequest = null;
+    authorizationRequest = null;
+    showAuthorizationRequest = false;
     authCode = null;
     accessToken = null;
     idToken = null;

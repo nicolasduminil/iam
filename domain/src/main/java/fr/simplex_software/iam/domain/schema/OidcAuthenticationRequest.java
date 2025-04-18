@@ -1,39 +1,23 @@
 package fr.simplex_software.iam.domain.schema;
 
-import io.smallrye.config.*;
 import jakarta.enterprise.context.*;
+import jakarta.inject.*;
 import jakarta.ws.rs.core.*;
-import org.eclipse.microprofile.openapi.annotations.media.*;
 
 import java.io.*;
 import java.net.*;
 import java.util.*;
 
-@ConfigMapping(prefix = "oauth2")
-@Schema(description = "The authentication request metadata")
+@ApplicationScoped
+@Named
 public class OidcAuthenticationRequest implements Serializable
 {
-  @Schema(required = true)
-  @WithName("client.id")
   private String clientId;
-  @Schema(required = true)
-  @WithName("client.redirectUri")
-  @WithDefault("##placehorlder##")
   private String redirectUri;
-  @Schema(required = true)
-  @WithName("client.responseType")
-  @WithDefault("code")
   private String responseType;
-  @Schema
-  @WithDefault("openid")
   private List<String> scopes = new ArrayList<>();
-  @Schema
   private Optional<String> prompt;
-  @Schema
-  @WithName("max.age")
   private Optional<String> maxAge;
-  @Schema
-  @WithName("login.hint")
   private Optional<String> loginHint;
 
   public OidcAuthenticationRequest()
@@ -61,8 +45,8 @@ public class OidcAuthenticationRequest implements Serializable
   }
 
   public OidcAuthenticationRequest(String clientId, String redirectUri, String responseType,
-                                   List<String> scopes, Optional<String> prompt,
-                                   Optional<String> maxAge, Optional<String> loginHint)
+    List<String> scopes, Optional<String> prompt,
+    Optional<String> maxAge, Optional<String> loginHint)
   {
     this(clientId, scopes, prompt, maxAge, loginHint);
     this.redirectUri = redirectUri;

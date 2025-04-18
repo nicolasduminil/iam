@@ -15,24 +15,21 @@
       <f:selectItems value="#{openIdConnectView.realmScopes}"/>
     </p:selectCheckboxMenu>
     <p:spacer/>
-    <p:outputLabel for="@next" value="Prompt:" rendered="#{oidc}"/>
-    <p:selectOneMenu value="#{openIdConnectView.oidcAuthenticationRequest.prompt}"
-                       rendered="#{oidc}">
+    <p:outputLabel for="@next" value="Prompt:"/>
+    <p:selectOneMenu value="#{openIdConnectView.oidcAuthenticationRequest.prompt}">
       <f:selectItem itemLabel="none" itemValue="none"/>
       <f:selectItem itemLabel="login" itemValue="login"/>
       <f:selectItem itemLabel="consent" itemValue="consent"/>
       <f:selectItem itemLabel="select_account" itemValue="select_account"/>
     </p:selectOneMenu>
     <p:spacer/>
-    <p:outputLabel for="@next" value="Max age:" rendered="#{oidc}"/>
-    <p:inputText value="#{openIdConnectView.oidcAuthenticationRequest.maxAge}"
-                 rendered="#{oidc}">
+    <p:outputLabel for="@next" value="Max age:"/>
+    <p:inputText value="#{openIdConnectView.oidcAuthenticationRequest.maxAge}">
       <f:validateLongRange minimum="0"/>
     </p:inputText>
     <p:spacer/>
-    <p:outputLabel for="@next" value="Login hint:" rendered="#{oidc}"/>
-    <p:inputText value="#{openIdConnectView.oidcAuthenticationRequest.loginHint}"
-                 rendered="#{oidc}"/>
+    <p:outputLabel for="@next" value="Login hint:"/>
+    <p:inputText value="#{openIdConnectView.oidcAuthenticationRequest.loginHint}"/>
     <p:spacer/>
   </h:panelGrid>
   <h:panelGrid id="ignored" columns="3" cellpadding="7" styleClass="mb-3">

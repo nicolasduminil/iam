@@ -17,10 +17,14 @@
               <my:discovery-tab bean="#{openIdConnectView}"
                                 discoveryOutputValue="OAuth 2.0 provider configuration"/>
             </p:tab>
-            <p:tab id="authentication-oidc-tab" title="2. Authorization">
-              <ui:include id="include-authentication-oidc-tab" src="../tabs/authentication-oidc-tab.xhtml">
-                <ui:param name="oidc" value="false"></ui:param>
-              </ui:include>
+            <p:tab id="authorization-oauth20-tab" title="2. Authorization">
+              <ui:include id="include-authorization-oauth20-tab" src="../tabs/authorization-oauth20-tab.xhtml"/>
+            </p:tab>
+            <p:tab id="invoke-service-tab" title="3. Invoke Service">
+              <ui:include id="include-invoke-service-tab" src="../tabs/invoke-service-oauth20-tab.xhtml"/>
+            </p:tab>
+            <p:tab id="reset-tab" title="Reset">
+              <ui:include id="include-reset-oidc-tab" src="../tabs/reset-oidc-tab.xhtml"/>
             </p:tab>
           </p:tabView>
         </div>

@@ -10,8 +10,8 @@
     <p:outputLabel for="@next" rendered="#{not empty openIdConnectView.formattedUserInfoRequest}"
                    value="UserInfo request:"/>
     <p:inputText rendered="#{not empty openIdConnectView.formattedUserInfoRequest}"
-                 value="#{openIdConnectView.formattedUserInfoRequest}" readonly="true"
-                 label="userinfo-request" size="60"/>
+                 value="#{openIdConnectView.formattedUserInfoRequest}"
+                 readonly="true" size="60"/>
     <p:outputLabel for="@next" rendered="#{not empty openIdConnectView.userInfoResponse}"
                    value="UserInfo response:"/>
     <p:inputTextarea rendered="#{not empty openIdConnectView.userInfoResponse}"

@@ -1,38 +1,40 @@
 package fr.simplex_software.iam.domain.schema;
 
-import io.smallrye.config.*;
 import jakarta.ws.rs.core.*;
-import org.eclipse.microprofile.openapi.annotations.media.*;
 
-import java.io.Serializable;
+import java.io.*;
 import java.net.*;
+import java.util.*;
 
-@ConfigMapping(prefix = "oauth2")
-@Schema(description = "The authorization request metadata")
 public class Oauth20AuthorizationRequest implements Serializable
 {
-  @Schema(required = true)
-  @WithName("client.id")
   private String clientId;
-  @Schema(required = true)
-  @WithName("client.redirectUri")
-  @WithDefault("##placehorlder##")
   private String redirectUri;
-  @Schema(required = true)
-  @WithName("client.responseType")
-  @WithDefault("code")
   private String responseType;
+  private List<String> scopes = new ArrayList<>();
 
   public Oauth20AuthorizationRequest()
   {
+    scopes.add("openid");
   }
 
   public Oauth20AuthorizationRequest(String clientId, String redirectUri, String responseType)
   {
+    this();
     this.clientId = clientId;
     this.redirectUri = redirectUri;
     this.responseType = responseType;
   }
+
+  public Oauth20AuthorizationRequest(String clientId, List<String> scopes, String redirectUri, String responseType)
+  {
+    this();
+    this.clientId = clientId;
+    this.scopes.addAll(scopes);
+    this.redirectUri = redirectUri;
+    this.responseType = responseType;
+  }
+
 
   public String getClientId()
   {
@@ -64,12 +66,25 @@ public class Oauth20AuthorizationRequest implements Serializable
     this.responseType = responseType;
   }
 
+  public List<String> getScopes()
+  {
+    return scopes;
+  }
+
+  public void setScopes(List<String> scopes)
+  {
+    this.scopes = new ArrayList<>(scopes);
+  }
+
   public URI buildAuthorizationUri(String authorizationEndpoint)
   {
+    if (!scopes.contains("opedid"))
+      scopes.add("openid");
     UriBuilder builder = UriBuilder.fromUri(authorizationEndpoint)
       .queryParam("client_id", getClientId())
       .queryParam("response_type", getResponseType())
-      .queryParam("redirect_uri", getRedirectUri());
+      .queryParam("redirect_uri", getRedirectUri())
+      .queryParam("scope", String.join(" ", scopes));
     return builder.build();
   }
 }
