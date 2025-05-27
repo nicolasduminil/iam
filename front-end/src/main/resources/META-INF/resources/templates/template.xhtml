@@ -1,0 +1,49 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ui="jakarta.faces.facelets" xmlns:h="jakarta.faces.html"
+      xmlns:p="http://primefaces.org/ui" xmlns:f="jakarta.faces.core">
+<f:view contentType="text/html" encoding="UTF-8">
+  <h:head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <f:facet name="last">
+      <h:outputStylesheet library="css" name="default.css"/>
+    </f:facet>
+    <title><ui:insert name="title">Please add a proper title for this page !</ui:insert></title>
+  </h:head>
+  <h:body style="margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column;">
+    <h:form id="navForm" style="flex: 1 0 auto;">
+      <ui:insert name="menu"/>
+      <ui:insert name="pageTitle">Default Page Title</ui:insert>
+      <ui:param name="note1" value="#{msgs.note1}"/>
+      <ui:param name="note2" value="#{msgs.note2}"/>
+      <p:panel style="margin: 0; height: 100%;">
+        <h:panelGrid columns="2" style="width: 50%;">
+          <h:graphicImage value="/img/simplex.png" alt="Simplex logo"/>
+          <h:panelGroup>
+            <div>
+              <p>
+                <strong style="fontfamily: Arial;">#{note1}</strong>
+                <br/>
+                <span style="fontFamily: Tahoma; font-size: 0.85em">#{note2}</span>
+              </p>
+            </div>
+            <div style="fontfamily: Garamond; font-size: 0.70em;">
+              <ui:insert name="legend">Default legend</ui:insert>
+            </div>
+          </h:panelGroup>
+        </h:panelGrid>
+      </p:panel>
+    </h:form>
+    <p:panel id="content" style="flex: 1 0 auto; margin: 0;">
+      <ui:insert name="content"/>
+    </p:panel>
+    <div
+      style="display: flex; justify-content: center; text-align: center; padding: 5px; background-color: #45a1ff; color: #000; flex-shrink: 0;">
+      <p style="font-size: 0.85em;">
+        <ui:insert name="footer">Default footer</ui:insert>
+      </p>
+    </div>
+  </h:body>
+</f:view>
+</html>

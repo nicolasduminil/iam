@@ -1,0 +1,13 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/templates/keycloak-template.xhtml">
+  <ui:define name="content">
+    <div class="layout-error p-5">
+      <h1>System error</h1>
+      <h5>A server error has occurred.</h5>
+      <p>Please inspect the log file for further details.</p>
+      <p:button outcome="/index" value="Go to Homepage" class="secondary"/>
+    </div>
+  </ui:define>
+</ui:composition>

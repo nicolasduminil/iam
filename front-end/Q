@@ -1,0 +1,72 @@
+The issue is now clear - your JWT token doesn't contain any role information, and the user appears as anonymous because the authentication isn't being properly processed.
+
+There are several things to check:
+
+First, you're using an ID token ( "typ": "ID") instead of an access token. For securing endpoints, you should be using the access token. Make sure your client is configured to use the access token for authentication.
+
+In your Keycloak client configuration:
+
+Make sure "Access Type" is set to "confidential" or "public" depending on your needs
+
+Enable "Service Accounts Enabled" if you're using client credentials flow
+
+Verify that "Authorization Enabled" is ON
+
+In your Quarkus configuration (application.properties), ensure you have:
+
+quarkus.oidc.auth-server-url=http://localhost:8080/realms/myrealm
+quarkus.oidc.client-id=fe
+quarkus.oidc.credentials.secret=your-client-secret
+quarkus.oidc.application-type=service
+# If using web application
+# quarkus.oidc.application-type=web-app
+quarkus.oidc.token.issuer=http://localhost:8080/realms/myrealm
+
+Copy
+
+Insert at cursor
+properties
+In Keycloak, add a protocol mapper for roles:
+
+Go to your client
+
+Click on "Mappers" tab
+
+Create new mapper:
+
+Name: realm roles
+
+Mapper Type: User Realm Role
+
+Token Claim Name: realm_access.roles
+
+Claim JSON Type: String
+
+Add to ID token: ON
+
+Add to access token: ON
+
+Make sure you're using the correct token in your requests. The Authorization header should look like:
+
+Authorization: Bearer <access_token>
+
+Copy
+
+Insert at cursor
+text
+After making these changes, your access token should contain a payload similar to:
+
+{
+  "exp": 1745600220,
+  "iat": 1745599920,
+  "realm_access": {
+    "roles": ["manager"]
+  },
+  // ... other claims
+}
+
+Copy
+
+Insert at cursor
+json
+And the SecurityIdentity output should show the proper roles and authenticated state

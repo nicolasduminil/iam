@@ -1,0 +1,72 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:f="jakarta.faces.core"
+                xmlns:h="jakarta.faces.html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="jakarta.faces.facelets">
+  <h:panelGrid columns="3" cellpadding="7" styleClass="mb-3">
+    <p:outputLabel for="@next" value="Client ID:"/>
+    <p:selectOneMenu value="#{authorizationCodeView.authRequest.clientId}">
+      <f:selectItems value="#{util.getRealmClients(authorizationCodeView.realm)}"/>
+    </p:selectOneMenu>
+    <p:spacer/>
+    <p:outputLabel for="@next" value="Response type:"/>
+    <p:selectOneMenu value="#{authorizationCodeView.authRequest.responseType}">
+      <f:selectItems value="#{authorizationCodeView.authRequest.responseTypes}"/>
+    </p:selectOneMenu>
+    <p:spacer/>
+    <p:outputLabel for="@next" value="Scope:"/>
+    <p:selectCheckboxMenu multiple="true" emptyLabel="Please select..." updateLabel="true"
+                          style="min-width: 15rem" panelStyle="width: 30rem" scrollHeight="250"
+                          value="#{authorizationCodeView.authRequest.scopes}">
+      <f:selectItems value="#{util.getRealmScopes(authorizationCodeView.realm)}"/>
+    </p:selectCheckboxMenu>
+    <p:spacer/>
+    <p:outputLabel for="@next" value="Prompt:"/>
+    <p:selectOneMenu value="#{authorizationCodeView.authRequest.prompt}">
+      <f:selectItems value="#{authorizationCodeView.authRequest.promptTypes}" />
+    </p:selectOneMenu>
+    <p:spacer/>
+    <p:outputLabel for="@next" value="Max age:"/>
+    <p:spinner value="#{authorizationCodeView.authRequest.maxAge}"
+      min="0" max="86400" default="3600" stepFactor="900"/>
+    <p:spacer/>
+    <p:outputLabel for="@next" value="Login hint:"/>
+    <p:inputText value="#{authorizationCodeView.authRequest.loginHint}"/>
+    <p:spacer/>
+  </h:panelGrid>
+  <h:panelGrid id="ignored" columns="3" cellpadding="7" styleClass="mb-3">
+    <p:commandButton
+      value="#{empty authorizationCodeView.authData.authRequest ?
+                'Generate' : (authorizationCodeView.authData.showAuthRequest ?
+                'Hide Request' : 'Show Request')}"
+      update="@parent @form:msgs" process="@this @parent:@previous"
+      action="#{authorizationCodeView.generateAuthRequest}"
+      icon="#{empty authorizationCodeView.authData.authRequest ?
+                'pi pi-check' : (authorizationCodeView.authData.showAuthRequest ?
+                'pi pi-eye-slash' : 'pi pi-eye')}"/>
+    <div style="height: 10px;"></div>
+    <p:outputPanel style="max-height: 20em; max-width: 60em; overflow: auto;">
+      <p:outputLabel for="@next" value="Authorization request: "
+                     rendered="#{not empty authorizationCodeView.authData.authRequest and authorizationCodeView.authData.showAuthRequest}"/>
+      <div style="height: 10px;"></div>
+      <p:inputTextarea value="#{authorizationCodeView.authData.formattedAuthRequest}"
+                       readonly="true" autoResize="false" rows="5" cols="60"
+                       style="width: 100%; height: 100%; border: 1px solid #ccc;"
+                       rendered="#{not empty authorizationCodeView.authData.formattedAuthRequest and authorizationCodeView.authData.showAuthRequest}"/>
+    </p:outputPanel>
+    <p:commandButton value="Send Authorization Request"
+                     rendered="#{not empty authorizationCodeView.authData.authRequest and authorizationCodeView.authData.showAuthRequest}"
+                     update="@parent:@next" process="@this"
+                     action="#{authorizationCodeView.sendAuthRequest()}"
+                     icon="#{empty authorizationCodeView.authData.authRequest ? 'pi pi-check' : (authorizationCodeView.authData.showAuthRequest ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
+  </h:panelGrid>
+  <h:panelGrid columns="2" styleClass="mb-3"
+               columnClasses="width: 20%; vertical-align: top;, width: 80%;"
+               rendered="#{not empty authorizationCodeView.authCode}">
+    <p:outputLabel for="@next" rendered="#{not empty authorizationCodeView.authCode}"
+                   value="Authorization response:"/>
+    <p:inputText rendered="#{not empty authorizationCodeView.authCode}"
+                 value="#{authorizationCodeView.authCode}" readonly="true"
+                 size="100"/>
+  </h:panelGrid>
+</ui:composition>

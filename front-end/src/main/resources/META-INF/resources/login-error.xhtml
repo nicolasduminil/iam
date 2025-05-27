@@ -1,0 +1,14 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/templates/keycloak-template.xhtml">
+  <ui:define name="content">
+    <div class="layout-error p-5">
+      <h2>Authentication Failed</h2>
+      <p>There was an error during the authentication process.</p>
+      <p>Error: #{param["error"]}</p>
+      <p>Message: #{param["message"]}</p>
+      <p:button outcome="/index" value="Go to Homepage" class="secondary"/>
+    </div>
+  </ui:define>
+</ui:composition>

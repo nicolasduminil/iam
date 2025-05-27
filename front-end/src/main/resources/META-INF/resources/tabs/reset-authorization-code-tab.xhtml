@@ -1,0 +1,11 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="jakarta.faces.facelets">
+  <p:panelGrid columns="1" styleClass="mb-3" cellpadding="7" style="text-align: left;">
+    <p:commandButton value="Reset"
+                     update="@form"
+                     process="@this"
+                     action="#{backingBean.reset()}"
+                     icon="pi pi-check"/>
+  </p:panelGrid>
+</ui:composition>

@@ -1,0 +1,29 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="jakarta.faces.facelets">
+  <p:panelGrid columns="1" cellpadding="7" styleClass="mb-3" style="text-align: left;">
+    <p:commandButton value="Send Refresh Request"
+                     rendered="#{not empty authorizationCodeView.tokenData.tokenResponse}"
+                     update="@parent" process="@this"
+                     action="#{authorizationCodeView.sendRefreshRequest()}"
+                     icon="pi pi-check"/>
+    <p:outputLabel for="@next" rendered="#{not empty authorizationCodeView.tokenData.formattedRefreshRequest}"
+                   value="Refresh request:"/>
+    <p:inputTextarea rendered="#{not empty authorizationCodeView.tokenData.formattedRefreshRequest}"
+                     autoResize="false" rows="5" cols="30"
+                     style="width: 25%; height: 100%; border: 1px solid #ccc;"
+                     value="#{authorizationCodeView.tokenData.formattedRefreshRequest}" readonly="true"/>
+    <p:outputLabel for="@next" rendered="#{not empty authorizationCodeView.tokenData.refreshResponse}"
+                   value="Refresh response:"/>
+    <p:inputTextarea rendered="#{not empty authorizationCodeView.tokenData.refreshResponse}"
+                     autoResize="false" rows="5" cols="30"
+                     style="width: 25%; height: 100%; border: 1px solid #ccc;"
+                     value="#{authorizationCodeView.tokenData.refreshResponse}" readonly="true"/>
+    <p:outputLabel for="@next" rendered="#{not empty authorizationCodeView.tokenData.refreshPayloadJson}"
+                   value="ID Token payload:"/>
+    <p:inputTextarea rendered="#{not empty authorizationCodeView.tokenData.refreshPayloadJson}"
+                     autoResize="false" rows="5" cols="30"
+                     style="width: 25%; height: 100%; border: 1px solid #ccc;"
+                     value="#{authorizationCodeView.tokenData.refreshPayloadJson}" readonly="true"/>
+  </p:panelGrid>
+</ui:composition>

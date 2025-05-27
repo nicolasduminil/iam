@@ -1,0 +1,32 @@
+{
+  "clientId" : "fe-sac",
+  "enabled" : true,
+  "protocol" : "openid-connect",
+  "publicClient" : false,
+  "bearerOnly" : false,
+  "standardFlowEnabled" : false,
+  "implicitFlowEnabled" : false,
+  "directAccessGrantsEnabled" : false,
+  "serviceAccountsEnabled" : true,
+  "webOrigins" : ["http://localhost:8082"],
+  "defaultClientScopes": [
+    "openid",
+    "profile",
+    "email"
+  ],
+  "protocolMappers": [
+    {
+      "name": "realm roles",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-usermodel-realm-role-mapper",
+      "config": {
+        "multivalued": "true",
+        "userinfo.token.claim": "true",
+        "id.token.claim": "true",
+        "access.token.claim": "true",
+        "claim.name": "realm_access.roles",
+        "jsonType.label": "String"
+      }
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="jakarta.faces.facelets">
+  <p:panelGrid columns="1" cellpadding="7" styleClass="mb-3" style="text-align: left;">
+    <p:outputLabel for="@next" rendered="#{not empty authorizationCodeView.authCode}"
+                   value="Authentication response:"/>
+    <p:inputText rendered="#{not empty authorizationCodeView.authCode}"
+                 value="#{authorizationCodeView.authData.authCode}" readonly="true"
+                 size="100"/>
+    <p:commandButton value="Send Token Request"
+                     rendered="#{not empty authorizationCodeView.authRequest and authorizationCodeView.authData.showAuthRequest}"
+                     process="@this @previous"
+                     update="@parent @form"
+                     action="#{authorizationCodeView.sendTokenRequest()}"
+                     icon="#{empty authorizationCodeView.authRequest ? 'pi pi-check' : (authorizationCodeView.authData.showAuthRequest ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
+    <p:outputLabel for="@next" rendered="#{not empty authorizationCodeView.tokenData.formattedTokenRequest}"
+                   value="Token request:"/>
+    <p:inputTextarea rendered="#{not empty authorizationCodeView.tokenData.formattedTokenRequest}"
+                     autoResize="false" rows="5" cols="30"
+                     style="width: 25%; height: 100%; border: 1px solid #ccc;"
+                     value="#{authorizationCodeView.tokenData.formattedTokenRequest}" readonly="true"/>
+    <p:outputLabel for="@next" rendered="#{not empty authorizationCodeView.tokenData.headerJson}"
+                   value="ID Token header:"/>
+    <p:inputTextarea rendered="#{not empty authorizationCodeView.tokenData.headerJson}"
+                     autoResize="false" rows="5" cols="30"
+                     style="width: 25%; height: 100%; border: 1px solid #ccc;"
+                     value="#{authorizationCodeView.tokenData.headerJson}" readonly="true"/>
+    <p:outputLabel for="@next" rendered="#{not empty authorizationCodeView.tokenData.payloadJson}"
+                   value="ID Token payload:"/>
+    <p:inputTextarea rendered="#{not empty authorizationCodeView.tokenData.payloadJson}"
+                     autoResize="false" rows="5" cols="30"
+                     style="width: 20%; height: 100%; border: 1px solid #ccc;"
+                     value="#{authorizationCodeView.tokenData.payloadJson}" readonly="true"/>
+    <p:outputLabel for="@next" rendered="#{type eq 'oidc' and not empty authorizationCodeView.tokenData.idTokenSignature}"
+                   value="ID Token signature:"/>
+    <p:inputText rendered="#{type eq 'oidc' and not empty authorizationCodeView.tokenData.idTokenSignature}"
+                 value="#{authorizationCodeView.tokenData.idTokenSignature}" readonly="true"
+                 size="100"/>
+  </p:panelGrid>
+</ui:composition>

@@ -1,0 +1,27 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:f="jakarta.faces.core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="jakarta.faces.facelets">
+  <p:panelGrid columns="1" cellpadding="7" styleClass="mb-3" style="text-align: left;">
+    <p:commandButton value="Invoke public service"
+                     rendered="#{not empty backingBean.tokenData.accessToken}"
+                     update="@form:msgs @parent" process="@this"
+                     action="#{backingBean.invokePublicService()}"
+                     icon="pi pi-check"/>
+    <p:outputLabel for="@next" rendered="#{not empty backingBean.serviceData.publicServiceResponse}"
+                   value="Public service response:"/>
+    <p:inputText rendered="#{not empty backingBean.serviceData.publicServiceResponse}"
+                 value="#{backingBean.serviceData.publicServiceResponse}"
+                 readonly="true" size="60"/>
+    <p:commandButton value="Invoke secured service"
+                     rendered="#{not empty backingBean.tokenData.accessToken}"
+                     update="@form:msgs @parent" process="@this"
+                     action="#{backingBean.invokeSecuredService()}"
+                     icon="pi pi-check"/>
+    <p:outputLabel for="@next" rendered="#{not empty backingBean.serviceData.securedServiceResponse}"
+                   value="Secured service response:"/>
+    <p:inputText rendered="#{not empty backingBean.serviceData.securedServiceResponse}"
+                 value="#{backingBean.serviceData.securedServiceResponse}"
+                 readonly="true" size="60"/>
+  </p:panelGrid>
+</ui:composition>

@@ -1,0 +1,29 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="jakarta.faces.facelets" xmlns:f="http://java.sun.com/jsf/core">
+  <h:panelGrid columns="1" cellpadding="7" styleClass="mb-3">
+    <p:outputLabel for="@next" value="Issuer URI:"/>
+    <p:inputText size="40" maxlength="255"
+                 value="#{authorizationCodeView.issuer}" required="true">
+      <f:validateLength minimum="30"/>
+    </p:inputText>
+    <p:message for="@previous" display="icon"/>
+    <p:commandButton
+      value="#{empty authorizationCodeView.discoveryData.discoveryJson ? 'Discover' : (authorizationCodeView.discoveryData.showDiscoveryJson ? 'Hide Details' : 'Show Details')}"
+      update="@form"
+      process="@this @previous @previous"
+      action="#{authorizationCodeView.loadDiscovery}"
+      icon="#{empty authorizationCodeView.discoveryData.discoveryJson ? 'pi pi-check' : (authorizationCodeView.discoveryData.showDiscoveryJson ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
+  </h:panelGrid>
+  <div style="height: 10px;"></div>
+  <p:outputPanel style="max-height: 20em; max-width: 60em; overflow: auto;">
+    <p:outputLabel for="@next" value="Keycloak OpenID Connect provider configuration"
+                   rendered="#{not empty authorizationCodeView.discoveryData.discoveryJson and authorizationCodeView.discoveryData.showDiscoveryJson}"/>
+    <div style="height: 10px;"></div>
+    <p:inputTextarea value="#{authorizationCodeView.discoveryData.discoveryJson}"
+                     readonly="true" autoResize="false" rows="10" cols="30"
+                     style="width: 100%; height: 100%; border: 1px solid #ccc;"
+                     rendered="#{not empty authorizationCodeView.discoveryData.discoveryJson and authorizationCodeView.discoveryData.showDiscoveryJson}"/>
+  </p:outputPanel>
+</ui:composition>

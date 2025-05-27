@@ -1,0 +1,44 @@
+<ui:composition template="/templates/template.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets">
+  <ui:define name="title">Keycloak Identity Provider</ui:define>
+  <ui:define name="pageTitle">
+    <h1>Welcome to the Keycloak Sandbox</h1>
+  </ui:define>
+  <ui:define name="legend">
+    <ul style="margin-left: 100px; padding: 0; text-align: left;">
+      <li>Single-Sign On and Single-Sign Out for browser applications</li>
+      <li>OpenID Connect support</li>
+      <li>OAuth 2.0 support</li>
+      <li>SAML support</li>
+      <li>Identity Brokering - Authenticate with external OpenID Connect or SAML Identity Providers</li>
+      <li>Social Login - Enable login with Google, GitHub, Facebook, Twitter, and other social network</li>
+      <li>User Federation - Sync users from LDAP and Active Directory servers</li>
+      <li>Kerberos bridge - Automatically authenticate users that are logged-in to a Kerberos server</li>
+      <li>Admin Console for central management of users, roles, role mappings, clients and configuration</li>
+      <li>Account Management console that allows users to centrally manage their account</li>
+      <li>Theme support - Customize all user facing pages to integrate with your applications and branding</li>
+      <li>Two-factor Authentication - Support for TOTP/HOTP via Google Authenticator or FreeOTP</li>
+      <li>Login flows - optional user self-registration, recover password, verify email, require password update, etc</li>
+      <li>Session management - Admins and users themselves can view and manage user sessions</li>
+      <li>Token mappers - Map user attributes, roles, etc. how you want into tokens and statements</li>
+      <li>Not-before revocation policies per realm, application and user</li>
+      <li>CORS support - Client adapters have built-in support for CORS</li>
+      <li>Client adapters for JavaScript applications, WildFly, JBoss EAP, Fuse, Tomcat, Jetty, Spring, etc</li>
+      <li>Supports any platform/language that has an OpenID Connect Resource Provider library or SAML 2.0 Service Provider library</li>
+    </ul>
+  </ui:define>
+  <ui:param name="note1" value="The Keycloak server is running as a Docker image !"/>
+  <ui:param name="note2" value="Here are some of the features this service provides:"/>
+  <ui:define name="menu">
+    <ui:include src="/menu/menu.xhtml"/>
+  </ui:define>
+  <ui:define name="footer">
+    Powered by <a href="https://quarkus.io/" style="color: #000;">Quarkus</a>
+    and <a href="https://www.primefaces.org/" style="color: #000;">PrimeFaces</a>
+    <br/>
+    <span style="font-size: 0.65em;">&#169; 2024
+      <a href="http://www.simplex-software.fr">Simplex Software</a>
+    </span>
+  </ui:define>
+</ui:composition>

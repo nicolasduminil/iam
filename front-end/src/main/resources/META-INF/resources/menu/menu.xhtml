@@ -1,0 +1,15 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui">
+  <p:menubar id="navBar">
+    <p:menuitem id="home" value="Home" url="/index.xhtml"/>
+    <p:submenu id="oauth20-grant-type-id" label="OAuth 2.0 Grant Type">
+      <p:menuitem id="authorization-code-id" value="Authorization code"
+                  url="/keycloak/authorization-code.xhtml"/>
+      <p:menuitem id="resource-owner-password-id" value="Resource owner password"
+                  url="/keycloak/resource-owner-password.xhtml"/>
+      <p:menuitem id="resource-owner-password-id" value="Client credentials"
+                  url="/keycloak/client-credentials.xhtml"/>
+    </p:submenu>
+  </p:menubar>
+</ui:composition>

@@ -1,0 +1,41 @@
+<ui:composition xmlns:ui="jakarta.faces.facelets" template="/templates/keycloak-template.xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:p="http://primefaces.org/ui">
+  <ui:define name="title">Using the OAuth 2.0 authorization code grant</ui:define>
+  <ui:define name="content">
+    <h3>Using the Keycloak Identity Provider for OIDC Authentication</h3>
+    <h:form id="form-authorization-code">
+      <p:growl id="msgs" showDetail="true" skipDetailIfEqualsSummary="true"/>
+      <div class="card">
+        <h5>Authorization code sandbox</h5>
+        <p:tabView id="tabs-authorization-code" activeIndex="#{param.activeIndex}">
+          <p:tab id="discovery-authorization-code-tab" title="1. Discovery">
+            <ui:include id="include-discovery-authorization-code-tab" src="../tabs/discovery-authorization-code-tab.xhtml"/>
+          </p:tab>
+          <p:tab id="login-authorization-code-tab" title="2. Authentication">
+            <ui:include id="include-login-authorization-code-tab" src="../tabs/login-authorization-code-tab.xhtml"/>
+          </p:tab>
+          <p:tab id="token-authorization-code-tab" title="3. Token">
+            <ui:include id="include-token-authorization-code-tab" src="../tabs/token-authorization-code-tab.xhtml"/>
+          </p:tab>
+          <p:tab id="refresh-authorization-code-tab" title="4. Refresh Token">
+            <ui:include id="include-refresh-authorization-code-tab" src="../tabs/refresh-authorization-code-tab.xhtml"/>
+          </p:tab>
+          <p:tab id="userinfo-authorization-code-tab" title="5. UserInfo">
+            <ui:include id="include-userinfo-authorization-code-tab" src="../tabs/userinfo-authorization-code-tab.xhtml"/>
+          </p:tab>
+          <p:tab id="invoke-service-authorization-code-tab" title="6. Invoke Service">
+            <ui:include id="include-invoke-service-authorization-code-tab" src="../tabs/invoke-service-authorization-code-tab.xhtml">
+              <ui:param name="backingBean" value="#{authorizationCodeView}"></ui:param>
+            </ui:include>
+          </p:tab>
+          <p:tab id="reset-authorization-code-tab" title="Reset">
+            <ui:include id="include-reset-authorization-code-tab" src="../tabs/reset-authorization-code-tab.xhtml">
+              <ui:param name="backingBean" value="#{authorizationCodeView}"></ui:param>
+            </ui:include>
+          </p:tab>
+        </p:tabView>
+      </div>
+    </h:form>
+  </ui:define>
+</ui:composition>

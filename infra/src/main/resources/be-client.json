@@ -1,0 +1,31 @@
+{
+  "clientId" : "be",
+  "enabled" : true,
+  "protocol" : "openid-connect",
+  "publicClient" : false,
+  "bearerOnly" : true,
+  "standardFlowEnabled" : true,
+  "implicitFlowEnabled" : false,
+  "directAccessGrantsEnabled" : false,
+  "serviceAccountsEnabled" : false,
+  "defaultClientScopes": [
+    "openid",
+    "profile",
+    "email"
+  ],
+  "protocolMappers": [
+    {
+      "name": "realm roles",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-usermodel-realm-role-mapper",
+      "config": {
+        "multivalued": "true",
+        "userinfo.token.claim": "true",
+        "id.token.claim": "true",
+        "access.token.claim": "true",
+        "claim.name": "realm_access.roles",
+        "jsonType.label": "String"
+      }
+    }
+  ]
+}

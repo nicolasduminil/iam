@@ -1,0 +1,22 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="jakarta.faces.facelets">
+  <p:panelGrid columns="1" cellpadding="7" styleClass="mb-3" style="text-align: left;">
+    <p:commandButton value="Send UserInfo Request"
+                     rendered="#{not empty authorizationCodeView.authData.authRequest}"
+                     update="@parent" process="@this"
+                     action="#{authorizationCodeView.sendUserInfoRequest()}"
+                     icon="pi pi-check"/>
+    <p:outputLabel for="@next" rendered="#{not empty authorizationCodeView.userInfoData.formattedUserInfoRequest}"
+                   value="UserInfo request:"/>
+    <p:inputText rendered="#{not empty authorizationCodeView.userInfoData.formattedUserInfoRequest}"
+                 value="#{authorizationCodeView.userInfoData.formattedUserInfoRequest}"
+                 readonly="true" size="60"/>
+    <p:outputLabel for="@next" rendered="#{not empty authorizationCodeView.userInfoData.userInfoResponse}"
+                   value="UserInfo response:"/>
+    <p:inputTextarea rendered="#{not empty authorizationCodeView.userInfoData.userInfoResponse}"
+                     autoResize="false" rows="5" cols="30"
+                     style="width: 25%; height: 100%; border: 1px solid #ccc;"
+                     value="#{authorizationCodeView.userInfoData.userInfoResponse}" readonly="true"/>
+  </p:panelGrid>
+</ui:composition>
