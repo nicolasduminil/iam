@@ -138,10 +138,17 @@ public class AuthorizationCodeView extends AbstractCommonView<AuthorizationCodeT
   {
     String userInfoEndpoint = (String) getDiscoveryData().getDiscovery().get("userinfo_endpoint");
     getUserInfoData().setFormattedUserInfoRequest(getUtil().formatRequest(URI.create(userInfoEndpoint)));
-    getUserInfoData().setUserInfoResponse(getUtil().prettyPrintJsonB(getClientManager().getClient().target(userInfoEndpoint)
-      .request(MediaType.APPLICATION_JSON)
-      .header("Authorization", "Bearer " + getTokenData().getAccessToken())
-      .get(String.class)));
+    try
+    {
+      getUserInfoData().setUserInfoResponse(getUtil().prettyPrintJsonB(getClientManager().getClient().target(userInfoEndpoint)
+        .request(MediaType.APPLICATION_JSON)
+        .header("Authorization", "Bearer " + getTokenData().getAccessToken())
+        .get(String.class)));
+    }
+    catch (Exception e)
+    {
+      getUtil().facesErrorMessage("User info response: %s".formatted(e.getMessage()));
+    }
   }
 
   public String getAuthCode()

@@ -51,7 +51,7 @@ public class DiscoveryData
 
   public void reset()
   {
-    discovery = null;
+    //discovery = null;
     discoveryJson = null;
     showDiscoveryJson = false;
   }

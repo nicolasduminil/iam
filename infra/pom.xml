@@ -18,7 +18,7 @@
         <artifactId>exec-maven-plugin</artifactId>
         <executions>
           <execution>
-            <id>customize-keycloak</id>
+            <id>start</id>
             <phase>pre-integration-test</phase>
             <goals>
               <goal>exec</goal>
@@ -29,7 +29,7 @@
             </configuration>
           </execution>
           <execution>
-            <id>Stop the Docker containers</id>
+            <id>stop</id>
             <phase>clean</phase>
             <goals>
               <goal>exec</goal>
@@ -40,6 +40,20 @@
               <arguments>
                 <argument>-c</argument>
                 <argument>docker stop iam-backend iam-frontend keycloak 2> /dev/null || true</argument>
+              </arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>restart</id>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>sh</executable>
+              <workingDirectory>${project.basedir}</workingDirectory>
+              <arguments>
+                <argument>-c</argument>
+                <argument>docker restart keycloak iam-frontend iam-backend 2> /dev/null || true</argument>
               </arguments>
             </configuration>
           </execution>

@@ -192,9 +192,9 @@ The output above shows that the Docker image `quay.io/keycloak/keycloak:latest`
 was pulled and installed locally.
 
     $ docker ps
-    CONTAINER ID   IMAGE                              COMMAND                  CREATED         STATUS         PORTS                                                           NAMES
+    CONTAINER ID   NAMES      IMAGE                              PORTS                                        STATUS
     ...
-    ba8d912aeb1c   quay.io/keycloak/keycloak:latest   "/opt/keycloak/bin/k…"   6 seconds ago   Up 5 seconds   8443/tcp, 0.0.0.0:8080->8080/tcp, :::8080->8080/tcp, 9000/tcp   keycloak
+    ded779e9c153   keycloak   quay.io/keycloak/keycloak:latest   8443/tcp, 0.0.0.0:8080->8080/tcp, 9000/tcp   Up 6 seconds
     ...
 
 Here you can see that the Docker container named `keycloak` is up and running.
@@ -202,9 +202,7 @@ You can see its log file as shown below:
 
     $ docker logs keycloak --details --follow 
     Updating the configuration and installing your custom providers, if any. Please wait.
-    2025-05-15 16:06:29,366 WARN  [io.qua.config] (build-28) Unrecognized configuration key "quarkus.smallrye-health.extensions.enabled" was provided; it will be ignored; verify that the dependency extension for this configuration is set or that you did not make a typo
-    2025-05-15 16:06:30,301 INFO  [io.qua.hib.orm.dep.HibernateOrmProcessor] (build-50) Persistence unit 'keycloak-default': Enforcing Quarkus defaults for dialect 'org.hibernate.dialect.H2Dialect' by automatically setting 'jakarta.persistence.database-product-version=2.3.230'.
-    2025-05-15 16:06:30,304 INFO  [io.qua.hib.orm.dep.HibernateOrmProcessor] (build-50) A legacy persistence.xml file is present in the classpath. This file will be used to configure JPA/Hibernate ORM persistence units, and any configuration of the Hibernate ORM extension will be ignored. To ignore persistence.xml files instead, set the configuration property 'quarkus.hibernate-orm.persistence-xml.ignore' to 'true'.
+    ...
     2025-05-15 16:06:34,954 INFO  [io.qua.dep.QuarkusAugmentor] (main) Quarkus augmentation completed in 6489ms
     Running the server in development mode. DO NOT use this configuration in production.
     ...
@@ -271,7 +269,11 @@ case, the first thing to do before getting access to the `master` realm, is to
 set up its temporary credentials. With Keycloak CLI, this can be done using the
 following command:
 
-    $ kcadm config credentials --server <server-url> --realm master --user <user-name> --password <user-password>
+    $ kcadm.sh config credentials \
+       --server <server-url> \
+       --realm master \
+       --user <user-name> \
+       --password <user-password>
 
 Of course, this command can only be executed once that the Keyclaok server has 
 started. Here `<server-url` is the full URL of the Keycloak server, for example
@@ -294,9 +296,17 @@ and, since realm aren't enabled by default, we need to do it using the argument
 
 Now is the time to create the Keycloak users. 
 
-    $ kcadm create users -r <realm-name> -s username=<user-name> -s enabled=true -s "emailVerified=true" \
-      -s "email=<user-email>" -s "firstName=<user-first-name>" -s "lastName=<user-last-name>"
-    $ kcadm set-password -r <realm-name> --username <user-name> --new-password <user-password>
+    $ kcadm.sh create users \
+       -r <realm-name> -s \
+       -- username=<user-name> \
+       -s enabled=true \
+       -s "emailVerified=true" \
+       -s "email=<user-email>" \
+       -s "firstName=<user-first-name>" \
+       -s "lastName=<user-last-name>"
+    $ kcadm.sh set-password -r <realm-name> \
+        --username <user-name> \
+        --new-password <user-password>
 
 The sequence above creates a new user in the newly created realm and defines the
 associated password. To be noted that users have several properties like their 
@@ -320,7 +330,7 @@ with more details concerning the client types as well as their properties.
 
 ### Creating roles and assigning them to users
 
-In order to assingn permission to users, we're using Keycloak roles. These roles
+In order to assign permission to users, we're using Keycloak roles. These roles
 can be assigned, as explained, to users, in which case we're talking about realm
 roles, or to clients. Here is an example of creating a new realm role and to 
 assign it to an user:
@@ -340,71 +350,567 @@ steps don't have to be executed manually, but we'll demonstrate how to automate
 them, in the most authentic SaC way, using tools like `docker` and `docker-compose`,
 integrated with Quarkus.
 
-## Running the sample application.
+## Getting started with the sample application.
 
 In order to illustrate all the concepts introduced above, we provide a sample 
-application, available here: .... It's a Java application, using Quarkus, the 
-famous supersonic and subatomic stack. It consists of several Maven modules or
-subprojects, as follows:
+application, available here: https://github.com/nicolasduminil/iam.git.
+It's a Java application, using Quarkus, the famous supersonic and subatomic stack.
+It consists of several Maven modules or subprojects, as follows:
 
-  - The `front-end` Maven module which deploys an SPA (*Single Page Application*) which uses the Jakarta Faces and PrimeFaces extension for Quarkus.
-  - The `back-end` Maven module which exposes a simple REST API called by the `front-end` module.
+  - The `front-end` Maven module which deploys a web application which uses the Jakarta Faces and PrimeFaces extension for Quarkus.
+  - The `back-end` Maven module which exposes a simple REST API invoked by the `front-end` module.
   - The `infra` Maven module which orchestrates the others ones, including the Keycloak server.
 
 Let's look in a greater detail at each one of hese modules.
 
-### The `infra` module.
+### Technical requirements
 
-We start with this module, named `infra`, because, as its name implies, it defines
+The sample application is a Java application, accordingly you need to have Java
+21 or later installed on your box. You could use different Java versions but, in
+this case, you need to slightly modify the master `pom.xml` file such that to 
+align with your Java version.
+
+You also need to have a local copy of the GitHub repository associated with the
+project. If you have Git installed, you can clone the repository by running this
+command in a terminal:
+
+    $ git clone https://github.com/nicolasduminil/iam.git
+
+Alternatively, you can download a ZIP of the same repository mentioned above.
+
+The sample application is using Keycloak as a IAM service, accordingly you need
+to have it running, either by downloading and installing it, or by running it 
+as an OCI compliant image, using Docker, Podman or any other tool you prefer.
+Here, we're using Docker and, consequently, if you want to run the sample application
+exactly as it is, you need a local Docker infrastructure.
+
+And since we're using Maven as our build engine, you need to have it installed
+as well.
+
+### Understanding the sample application
+
+The sample application consists of two parts: a frontend web application and a 
+backend REST API.
+The frontend web application is a classical web application, written in Java, 
+with Quarkus and the PrimeFaces extension for Quarkus.
+
+> **_NOTE:_**  The fact of having written the web application in Java, with 
+> PrimeFaces, which is an implementation of the Jakarta Faces specifications, 
+> might be surprising. As a matter of fact, it would have been more usual to 
+> write it in a JavaScript library, like Angular, Vue.js, etc. 
+> The reason we did it this way is that Jakarta Faces is a great web framework 
+> whose implementations offer hundreds of ready-to-use widgets and other visual
+> controls. Compared with Angular, where the visual components are a part of 
+> external libraries, like Material, NG-Bootstrap, Clarity, Kendo, Nebular, and
+> many others, Jakarta Faces implementations not only provide ways more widgets
+> and features, but also are part of the official JSR 372 specifications and, 
+> in this respect, they are standard, as opposed to the mentioned libraries, 
+> which evolve with their authors prevailing moods, without any guarantee of 
+> consistency and stability.
+> For more arguments in choosing Jakarta Faces implementations for web applications
+> please see my article on DZone: https://shorturl.at/Iv01O.
+
+As we want to focus on the features that Keycloak, as an enterprise IAM service,
+can offer, the sample application is very simple. Furthermore, to make it as simple
+as possible to run it, we're using Quarkus.
+
+The web application demonstrates the following features:
+
+  - It uses the Keycloak `discovery` endpoint.
+  - It uses the OAuth 2.0 `authorization code` grant type.
+  - It uses the OpenID Connect to obtain an ID token for the given `authorization code`.
+  - It uses the OpenID Connect protocol to login against the Keycloak service.
+  - It shows the ID and the access token.
+  - It refreshes of the access token.
+  - It invokes the userinfo Keycloak endpoint and displays the required data.
+  - It invokes the public and the secured backend endpoint using the RBAC (*Role Based Access Control*).
+
+The backend REST API is also very simple and is implemented with Quarkus as well.
+It provides a REST API with two endpoints:
+
+  - `/public`: A publicly available endpoint with no security
+  - `/secured`: A secured endpoint requiring an access token with the myrealm global role
+
+Using Quarkus with its embedded Undertow web server allows to make the code as 
+easy to understand and as simple to run as possible for anyone familiar with the
+Java programming language. The following diagram shows the relationship between
+the frontend, the backend, and the Keycloak service. The frontend authenticates
+the users against the Keycloak server and then invokes the backend, which uses 
+the Keycloak defined roles such that to validate the RBAC request:
+
+![Application overview](overview.png)
+
+Now  let’s look at some more details on how all these pieces come together.
+
+### Running the sample application
+
+In order to run the sample application, once you cloned the GitHub repository 
+associated with the project, all you need is to execute the following Maven 
+command:
+
+    $ cd <app-directory>
+    $ mvn clean install
+
+Of course, if that's the first time you're running the sample application, then
+yoi don't need the clean verb. You'll see a whole crowd of Maven output lines 
+and, if everything is okay, you'll see the following build process result:
+
+    [INFO] IAM :: The Master POM .............................. SUCCESS [  0.258 s]
+    [INFO] IAM :: The Doamain Module .......................... SUCCESS [  1.433 s]
+    [INFO] IAM :: The Common Module ........................... SUCCESS [  0.760 s]
+    [INFO] IAM :: The Back-End Module ......................... SUCCESS [ 13.560 s]
+    [INFO] IAM :: The Front-End Module ........................ SUCCESS [ 12.560 s]
+    [INFO] IAM :: The Infrastructure Module ................... SUCCESS [ 40.865 s]
+    [INFO] ------------------------------------------------------------------------
+    [INFO] BUILD SUCCESS
+    [INFO] ------------------------------------------------------------------------
+
+The durations shown above might be different in your case. Now, you can start the
+`front-end` application by firing your preferd browser at http://localhost:8082.
+You should see the following welcome screen:
+
+![Welcome screen](welcome.png)
+
+I took the greatest care and attention while designing the `front-end` such that
+not only to showcase the Keycloak most important features, but also to demonstrate
+the suitability of the Jakarta Faces compliant implementations, in this case 
+PrimeFaces, for UI based applications. And as you'll see later when we'll examine
+the `front-end` details, this specification, together with its implementations, 
+provides a way more robust architecture than the one offered by any JavaScript 
+based libraries.
+
+So, let's start now exploring this UI. A menu available in the menu bar allows 
+you to select the desired OAuth 2.0 grant type and proposes the following options:
+
+  - authorization code;
+  - resource owner password;
+  - client credentials.
+
+First, you need to know that the OAuth 2.0 protocol defines *grant types* as 
+being standardized methods that define how a client application can obtain 
+authorization to access protected resources. They represent different flows 
+through which an application can receive an access token to act on the behalf 
+of an user. The RFC 6749 (https://datatracker.ietf.org/doc/html/rfc6749) 
+provides all the required details.
+
+So, our sample application allows you to exercice all these grant types. To 
+beggin, hover your mouse over the menu labeled `OAuth 2.0 Grant Types` and select
+the first menu item named `Authorization code`. You'll see the following dialog
+box in the lower part of the screen:
+
+![Discovery screen](discovery.png)
+
+As you can notice, several ordered steps are proposed to you, in the manner of 
+a simplified workflow. Start by the first one labeled `Discovery` and click on 
+the button having the same name. A new input text area will be displayed, containing
+all the functional endpoints proposed by the Keycloak server. 
+
+The `Discovery` function is an optional specification that an OAuth 2.0 provider
+can decide if it wants to implement or not. This idea comes from the necessity 
+to associate REST endpoints to the OAuth 2.0 standard features. Instead of 
+defining these endpoints at the specification level, which would certainly weigh
+them down a lot, the implementors are free to craft them how they want. And since
+they would be different from an implementation to another one, the server has to
+provide the `Discovery` endpoint which, when invoked, will return all the other 
+endpoints attached to OAuth 2.0 standard operations. 
+
+In our case, you can find in the new displayed input text area control labeled
+`Keycloak OpenID Connect provider configuration`, the following entries:
+
+  - `authorization_endpoint`: the URL to use for authentication requests; 
+  - `token_endpoint`: the URL to use for token requests; 
+  - `introspection_endpoint`: the URL to use for introspection requests; 
+  - `userinfo_endpoint`: the URL to use for UserInfo requests; 
+  - `grant_types_supported`: the list of supported grant types; 
+  - `response_types_supported`: the list of supported response types;
+  - etc.
+
+Spend a short moement to scroll down among the endpoints that the Keycloak server
+makes available and that the `Discovery` returns as metadata. Then, continue with
+the next step of our workflow and click on the `Authentication` tab.The following
+dialog box will display:
+
+![Authentication screen](authentication.png)
+
+Here you need to provide all the information for the use of the `authorization
+code`grant type. We'll come back with finer details concerning this grant type,
+and all the others, for now just proceed as follows:
+
+  - in the combo list box labeled `Client ID` select `fe-facc`; this is the ID of the Keycloak client on the purpose prepared for this kind of gran type (more on that later);
+  - select `code`, if not already selected, in the combo list box labeled `Response type`;
+  - accept the default value of `profile email` for the combo check box labeled `Scope`; the scope `OIDC` is mandatory for Keycloak so it will be added automatically;
+  - accept the default value of `login` for the combo list box labeled `Prompt`;
+  - accept the default value of `3600` for the input text contrl named `Max age`;
+  - keep empty the input text control labeled `Login hint` or, if you prefer, you could type in `john`, which is the user name you need to use for authentication purposes.
+
+Now click on the `Generate` button and the following HTTP request will appear in
+the input text area labeled `Authorization request`:
+
+    http://quarkus.oidc.client-idlocalhost:8080/realms/myrealm/protocol/openid-connect/auth
+      client_id=fe-facc
+      redirect_uri=http://localhost:8082/callback
+      scope=profile+email+openid
+      response_type=code
+      prompt=login
+      max_age=3600
+
+This allows you to better understand how the `authorization code` grand type 
+works. Please notice that the `quarkus.oidc.client-idlocalhos` host name above
+is the name associated by the DNS (*Domain Name Service*) to `localhost`.
+
+Now, that you have seen what the `authorization code` request looks like, send 
+it by clicking the `Send authorization request` button. At this point, the 
+Keycloak service will take the helm and will display the login dialog. Type `john`
+as the user name and `password1` as the password. The authentication process 
+against the Keycloak service should succeed and you should see now the response
+to the `authorization code` request. It's a very long character string without any
+particular mening other the the ability to be exchanged against an ID token.
+
+Now, click on the `Token` tab and, in the new displayed dialog box, click on 
+the `Send token request` button. You'll be presented with three input text areas,
+the first of which will contain the following HTTP request sent to the Keycloak 
+server in order to obtain the access token:
+
+    http://quarkus.oidc.client-idlocalhost:8080/realms/myrealm/protocol/openid-connect/token
+      client_id=fe-facc
+      redirect_uri=http://localhost:8082/callback
+      scope=email+profile+openid+openid
+      client_secret=********************************
+      code=a647bb3d-3...
+
+Please notice the token endpoint which is `realms/myrealm/protocol/openid-connect
+/token`. The `authorization code` provided in the request under the `code` parameter
+has been truncated since it is too long and irelevant foe humans.
+
+The 2nd input text area in the dialog is the JWT (*JSON Web Token*) header which 
+only fields meaningfull for us are:
+
+  - `alg`: the algorithm used for the token encoding which, in this case, is RS256;
+  - `typ`: the type of the token which, in this case, is JWT.
+
+Last but not least, the 3rd input area text contains the JWT payload, as shown 
+below:
+
+    {
+      "exp": 1748451175,
+      "iat": 1748450875,
+      "jti": "f47e28a8-1106-43fa-bc55-29c69735d005",
+      "iss": "http://localhost:8080/realms/myrealm",
+      "aud": "fe-facc",
+      "sub": "139d80d5-0cf9-4edb-a2ab-8aed2c121acd",
+      "typ": "ID",
+      "azp": "fe-facc",
+      "sid": "a2fbba19-3ec2-45c4-866b-0179502d3a76",
+      "at_hash": "SVG6Dl6cqfTy6IxzBy1urw",
+      "email_verified": true,
+      "realm_access": {
+          "roles": [
+              "default-roles-myrealm",
+              "manager",
+              "offline_access",
+              "uma_authorization"
+          ]
+      },
+      "name": "John Doe",
+      "preferred_username": "john",
+      "given_name": "John",
+      "family_name": "Doe",
+      "email": "john.doe@emailcom"
+    }
+
+The listing above shows the structure of a JWT payload. The JSON elements that 
+you're seeing are called *claims*. Here are the most important ones:
+
+  - `iss`: this is the issuer URL, in our case the Keycloak realm;
+  - `aud`: the audience; identifies the intended recipients or consumers of the token, essentially, who is meant to accept and process this token; it typically matched the `client_id`;
+  - `typ`: the token type, in our case an OpenID Connect token;
+  - `azp`: the authorized party; represents the party to whom the ID token was issued, in this case the OAuth 2.0 client having the ID `fe-facc`;
+  - `realm-access`: the parent element encapsulating the properties which define the acess rules to a Keycloak realm;
+  - `roles`: this is a Keycloak specific claim that represents the user's realm-level roles. The roles `default-roles-myrealm`, `offline_access` and `uma_authorization` are standard, automatic roles, while `manager` is a custom one, used in our application, for RBAC purposes;
+
+The remaining claims, from `name` to `email` are self explaining.
+
+Okay, so we got an authorization code, we exchanged it against an ID token on 
+the behalf of the OpenID Connect protocol,by logging in to Keycloak as user 
+`john` and we examined these token content. As a JWT, the token has a header and a payload.
+
+Let's try now tro refersh our access token. Click on the `Refresh` tab and, then,
+on the `Send refresh request` button. The following dialog will be shown on the screen.
+
+![Refresh screen](refresh.png)
+
+Here you can see that, in order to refresh the JWT, the following request has 
+been sent to the Keycloak server:
+
+    http://quarkus.oidc.client-idlocalhost:8080/realms/myrealm/protocol/openid-connect/token
+      grant_type=refresh_token
+      refresh_token=eyJhbGciOi...
+      client_id=fe-facc
+      client_secret=********************************
+      scope=profile+email+openid
+
+We're passing the refresh token received during the initial authentication as a
+request parameter, together with the client ID and secret. Also, please notice 
+that, this time, the grant type is `refresh_token`. And here is the server's 
+response:
+
+    {
+      "access_token": "eyJhbGciOi...",
+      "refresh_token": "eyJhbGciOi...",
+      "refresh_expires_in": 1800,
+      "not-before-policy": 0,
+      "scope": "openid profile email",
+      "id_token": "eyJhbGciOi...",
+      "token_type": "Bearer",
+      "session_state": "70abc3f9-75b1-45a6-893f-4a0ceae68c89",
+      "expires_in": 300
+    }
+
+In order to save space, we replaced the irrelevant token content by "...". But 
+don't be confused, even if the ID, access and refresh tokens start all with a 
+similar header, there full content isn't the same.
+
+Let's see the `UserInfo` feature now. Remember that this endpoint is a standard
+part of the OpenID Connect protocol, built as an identity layer on top of OAuth 2.0.
+Click on the `UserInfo` tab and, then, on the button labeled `Send UserInfo 
+Request`. You'll see the following request displayed:
+
+    http://quarkus.oidc.client-idlocalhost:8080/realms/myrealm/protocol/openid-connect/
+
+and the following response:
+
+    {
+      "sub": "25c7280c-4dc4-4fcf-b482-7693daa1971f",
+      "email_verified": true,
+      "realm_access": {
+        "roles": [
+            "default-roles-myrealm",
+            "manager",
+            "offline_access",
+            "uma_authorization"
+        ]
+      },
+      "name": "John Doe",
+      "preferred_username": "john",
+      "given_name": "John",
+      "family_name": "Doe",
+      "email": "john.doe@emailcom"
+    }
+
+The last thing you can do is to invoke the backend service, by clicking on the
+`Invoke service` tab and, then, on the `Invoke public service` and, respectively,
+`Invoke secure service` button. The services response messages will be displayed
+proving this way that the RBAC works as expected. More on that later.
+
+Okay, so we went around the OAuth 2.0 `authorization code` grant type, let's 
+have a look now at the other two. In the menu bar, hover the `OAuth 2.0 Grant 
+Types` menu and, this time, select the `Resource owner password` menu item. 
+You'll see the following dialog box:
+
+![ROPC login screen](ropc-token.png)
+
+In this dialog box you need to select the `fe-ropc` client ID in the combo list
+box labeled `Client ID` and to type the password `password1` in the text field
+with the same name. Then click the button `Send token request`. You'll see the
+screen below:
+
+![ROPC send login screen](ropc-send-token.png)
+
+Now the JWT request, header and payload, that we have already discussed previously,
+will be displayed. The `Invoke service` function will work now exactly as in the
+case of the `authorization code` grant type.
+
+Reset again the go to the `Client credentials` tab. Here, select the client ID 
+`fa-sac` and click the `Send token request` button. The same JWT request, header
+and payload, that you have already seen several times precedently, will be again
+displayed.
+
+This concludes our Keycloak showcase with the OpenID Connect protocol and the 
+OAuth 2.0 grant types.
+
+> **_NOTE:_** During your exercises with the example application, you might spend
+> some time with different operations and your authorization code might expire.
+> Please notice that the property `max_age` of the `authorization_code` isn't 
+> related to the `authorization_code` validity but specifies the maximum time,
+> since the user's last auhentication, that the Keycloak server will accept. 
+> The `authorization_code` is much shorter, usually around 30 - 60 seconds. So,
+> should you spent longer than that with different operations, then you need to
+> either get a new `authorization code` and, then, to refresh the tokens, or 
+> to simply restart the applications using the command: `mvn -pl infra exec:exec@restart`.
+> This command will restart your containers. If you prefer to stop your Keycloak
+> service, to start it again and to reconfigure the realm, then the following 
+> command is for you: `mvn -pl infra exec:exec@stop exec:exec@start`.
+
+## Anatomy of the sample application
+
+As stated previously, the sample application is meant to showcase several typical
+cases of securing web applications and microservices with Keycloak and its 
+implementation of the OpenID Connect and OAuth 2.0 protocols. As such, it consists
+of a Maven multi-module project:
+
+  - a Maven module named `front-end` which, as its name states, represents the application GUI; it uses the PrimeFaces extension for Quarkus;
+  - a Maven module named `back-end` which represents the application REST API that the frontend invokes; it uses the RESTeasy extension for Quarkus;
+  - a Maven module named `infra` which is responsible for running the whole project's required infrastructure.
+
+Let's look one by one at these modules.
+
+### The `infra` module
+
+We start with the `infra` module because, as its name implies, it defines
 our overall infrastructure and, in this respect, it is the most important. It is
-responsible for running the `front-end` and the `back-end` applications, as well
-as the Keycloak server, as Docker images. The `docker-compose.yaml` file in the
-`src/main/resources` directory orchestrates this process, as shown below:
+responsible for running the `front-end` and the `back-end` modules, as well
+as the Keycloak server, as Docker images. It uses the `exec-maven-plugin`, as 
+shown below:
 
-    version: "3.7"
-    services:
-    keycloak:
-      image: quay.io/keycloak/keycloak
-      hostname: keycloak
-      container_name: keycloak
-      environment:
-        KC_BOOTSTRAP_ADMIN_USERNAME: admin
-        KC_BOOTSTRAP_ADMIN_PASSWORD: admin
-        KC_HEALTH_ENABLED: "true"
-      volumes:
-        - ./scripts/customize.sh:/opt/keycloak/customization/customize.sh
-        - ./fe-client.json:/opt/keycloak/customization/fe-client.json
-        - ./be-client.json:/opt/keycloak/customization/be-client.json
-      healthcheck:
-        test: [ "CMD", "curl", "--head", "http://localhost:8080/health/ready", "-sf" ]
-        interval: 10s
-        timeout: 2s
-        retries: 15
-        command: ["start-dev"]
-        network_mode: "host"
-    iam-backend:
-      image: nicolasduminil/iam-back-end:1.0-SNAPSHOT
-      depends_on:
-        - keycloak
-      container_name: iam-backend
-      hostname: iam-backend
-      network_mode: "host"
-    iam-frontend:
-      image: nicolasduminil/iam-front-end:1.0-SNAPSHOT
-      depends_on:
-        - iam-backend
-      container_name: iam-frontend
-      hostname: iam-frontend
-      network_mode: "host"
+    ...
+    <plugin>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>exec-maven-plugin</artifactId>
+      <executions>
+        <execution>
+          <id>start</id>
+          <phase>pre-integration-test</phase>
+          <goals>
+            <goal>exec</goal>
+          </goals>
+          <configuration>
+            <executable>${project.basedir}/src/main/resources/scripts/run.sh</executable>
+            <workingDirectory>${project.basedir}</workingDirectory>
+          </configuration>
+        </execution>
+        <execution>
+          <id>stop</id>
+          <phase>clean</phase>
+          <goals>
+            <goal>exec</goal>
+          </goals>
+          <configuration>
+            <executable>sh</executable>
+            <workingDirectory>${project.basedir}</workingDirectory>
+            <arguments>
+              <argument>-c</argument>
+              <argument>docker stop iam-backend iam-frontend keycloak 2> /dev/null || true</argument>
+            </arguments>
+          </configuration>
+        </execution>
+        <execution>
+          <id>restart</id>
+          <goals>
+            <goal>exec</goal>
+          </goals>
+          <configuration>
+            <executable>sh</executable>
+            <workingDirectory>${project.basedir}</workingDirectory>
+            <arguments>
+              <argument>-c</argument>
+              <argument>docker restart keycloak iam-frontend iam-backend 2> /dev/null || true</argument>
+            </arguments>
+          </configuration>
+        </execution>
+      </executions>
+    </plugin>
+    ...
 
-Let's try to deconstruct one by one the services described by this file. 
+The `pom.xml` fragment above shows the utilization of the `exec-maven-plugin` 
+to run our infrastructure. It defines the following three execution contexts:
 
-First, the `keycloak` service runs the Docker image `quay.io/keycloak/keycloak`
-provided by RedHat in their ecosystem catalog. A couple of environment variables
-are defined, especially in order to set up the temporary credentials for the
-`master` realm administrator. Then, several volumes are mounted on the container's
-`/opt/keycloak` mountpoint. Let's look in detail at the first one, which mounts
-the file `scr/main/resources/scripts/customize.sh`:
+  - `start`: this execution context is responsible for starting the whole infrastructure. In order to achieve this, it instrumentalizes the script `run.sh` that, as we'll see immediately, starts and customizes the Keycloak server and, then, runs the application's frontend and backend;
+  - `stop`: this execution context is responsible for stopping the Keycloak server, followed by the application's frontend and backend;
+  - `restart`: this execution context is responsible for restarting the whole infrastructure; it requires that the infrastructure has previously been started, at least once, using the `start` execution context.
+
+These execution context can be used directly with the `mvn` command. For example,
+admitting that we find ourselves in the project's root directory, the following command:
+
+    $ mvn -pl infra exec:exec@start
+
+will execute the `exec-maven-plugin` with the execution `start` context. Also,
+if we want to stop the infrastructure and to start it again, we can do it with 
+either this command:
+
+    $ mvn -pl infra exec:exec@stop exec:exec@start
+
+which will perform the Keycloak security realm customization, or with the one 
+below:
+
+    $ mvn -pl infra exec:exec@restart
+
+which won't customize the Keycloak security realm but, insted, will reproduce 
+the same realm customization in effect previously.
+
+Notice that the `-pl` switch of the `mvn` command is used to select the required
+module. This is because running this command without the `-pl` switch will produce
+an error, as neither the master module, nore any other one but `infra`, has a suitable
+configuration for the `exec-maven-plugin`. Also, the syntax `exec:exec` means
+to run the `exec` goal of the `exec-maven-plugin`. Like any other Maven plugin,
+`exec-maven-plugin` has several goals, as you can discover in the documentation:
+https://www.mojohaus.org/exec-maven-plugin/. Here we're using the `exec` one which
+aims at running shell commands or `bash` scripts.
+
+For example, running the full Maven build process with the command:
+
+    $ mvn clean install
+
+will first stop the project's infrastructure, if started, remove the existent 
+byte code, if any, compile the whole Java code to byte code and execute the `run.sh`
+script, located in `src/main/resources/scripts` directory. This script is shown
+below:
+
+    #!/bin/bash
+    docker run --name keycloak --rm -d \
+      -e KC_BOOTSTRAP_ADMIN_USERNAME=admin \
+      -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin \
+      -v $(pwd)/src/main/resources/fe-acc.json:/opt/keycloak/customization/fe-acc.json \
+      -v $(pwd)/src/main/resources/fe-ropc.json:/opt/keycloak/customization/fe-ropc.json \
+      -v $(pwd)/src/main/resources/fe-sac.json:/opt/keycloak/customization/fe-sac.json \
+      -v $(pwd)/src/main/resources/scripts/customize.sh:/opt/keycloak/customization/customize.sh \
+      --network host \
+      quay.io/keycloak/keycloak:latest start-dev > /dev/null 2>&1
+
+      MAX_RETRIES=10
+      COUNTER=0
+      until curl localhost:8080 -sf -o /dev/null;
+      do
+        sleep 5
+        COUNTER=$((COUNTER + 1))
+        if [ $COUNTER -eq $MAX_RETRIES ]
+        then
+          echo ">>> Failed to connect to Keycloak. We can't continue."
+          exit 1
+        else
+          echo ">>> Waiting for Keycloak to start... ($COUNTER/$MAX_RETRIES)"
+        fi
+      done
+      sleep 6
+      echo ">>> Keycloak is up and running !"
+
+      docker exec keycloak /opt/keycloak/customization/customize.sh localhost:8080
+      echo ">>> Keycloak customization completed."
+      export FE_ACC_SECRET=$(docker exec keycloak cat /opt/keycloak/.fe-acc-secret)
+      export FE_ROPC_SECRET=$(docker exec keycloak cat /opt/keycloak/.fe-ropc-secret)
+      export FE_SAC_SECRET=$(docker exec keycloak cat /opt/keycloak/.fe-sac-secret)
+      docker run --name iam-frontend --rm -d --network host \
+        -e FE_ACC_SECRET=$FE_ACC_SECRET -e FE_ROPC_SECRET=$FE_ROPC_SECRET \
+        -e FE_SAC_SECRET=$FE_SAC_SECRET \
+        nicolasduminil/iam-front-end:1.0-SNAPSHOT > /dev/null 2>&1
+      docker run --name iam-backend --rm -d --network host \
+        nicolasduminil/iam-back-end:1.0-SNAPSHOT > /dev/null 2>&1
+
+Let's try to deconstruct this script. It starts the Keycloak service as a Docker
+image and, while several such images are freely available, the one provided by 
+its editor, `quay.io/keycloak/keycloak:latest`, is probably the most suitable.
+
+Starting Keycloak might be a heavy operation, which could take several seconds,
+so we need to wait until it becomes fully operational. Hence, the `until ...do
+... done` cycle in the script. Please notice that we need to sleep here and there,
+in this part of the script, waiting for Keycloak, and since these sleep intervals
+are rather arbitrary, you might need to ammend them such that to align with your
+hardware.
+
+Once our Keycloak server started, we need to customize the security realm that
+we'll be using. This is done by running the script `customize.sh` and, since 
+this script needs to be run in the Docker container, we start it using the 
+`docker exec ...` command. Here id the script `customize.sh` located in the 
+`/opt/keycloak/customization` directory of the container's file system.
 
     #!/bin/bash
     KCADM=/opt/keycloak/bin/kcadm.sh
@@ -413,28 +919,32 @@ the file `scr/main/resources/scripts/customize.sh`:
     $KCADM create users -r myrealm -s username=john -s enabled=true -s "emailVerified=true" \
       -s "email=john.doe@emailcom" -s "firstName=John" -s "lastName=Doe"
     $KCADM set-password -r myrealm --username john --new-password password1
-    $KCADM create users -r myrealm -s username=jane -s enabled=true -s "emailVerified=true" \
-      -s "email=jane.doe@emailcom" -s "firstName=Jane" -s "lastName=Doe"
-    $KCADM set-password -r myrealm --username jane --new-password password1
-    $KCADM create clients -r myrealm -f /opt/keycloak/customization/fe-client.json
-    $KCADM create clients -r myrealm -f /opt/keycloak/customization/be-client.json
+    create_keycloak_client \
+      "/opt/keycloak/customization/fe-acc.json" \
+      "/opt/keycloak/.fe-acc-secret"
+    create_keycloak_client \
+      "/opt/keycloak/customization/fe-ropc.json" \
+      "/opt/keycloak/.fe-ropc-secret"
+    create_keycloak_client \
+      "/opt/keycloak/customization/fe-sac.json" \
+      "/opt/keycloak/.fe-sac-secret"
     $KCADM create roles -r myrealm -s name=manager
     $KCADM add-roles --uusername john --rolename manager -r myrealm
-    $KCADM create roles -r myrealm -s name=employee
-    $KCADM add-roles -r myrealm --uusername jane --rolename employee
+    $KCADM add-roles --uusername service-account-fe-sac -r myrealm --rolename manager
 
-This is a `bash` script used to customize our Keycloak service by creating a new
-security realm, named `myrealm`. This realm contains two users, `john` and `jane`
-having the roles of `manager` and, respectively, `employee`. Two clients are 
-created as well and their description is provided by the files 
-`src/main/resources/fe-client.json` and, respectively, 
-`src/main/resources/be-client.json`. These two clients correspond to our two 
-applications: `front-end` and `back-end`. We'll come back later with full details
-concerning these clients and there JSON definitions but, for now, let's have a 
-quick look at the first one:
+This is a `bash` script using the `kcadm.sh` tool, to customize our Keycloak 
+service by creating a new security realm, named `myrealm`. This realm contains 
+one user, `john`, having the role of `manager`. Three clients are created as well
+and their description is provided by the files `fe-acc.json`, `fe-ropc.json` and, 
+respectively, `fe-sac.json`, all located in the `src/main/resources/` directory 
+of our project, which is mapped to the `/opt/keycloak/` one of the container 
+file system.
+
+Let's now look at each one of these description files. The file `fe-facc.json`
+defines an OAuth 2.0 client using the `authorization-code` grant type. 
 
     {
-      "clientId" : "fe",
+      "clientId" : "fe-facc",
       "enabled" : true,
       "protocol" : "openid-connect",
       "publicClient" : false,
@@ -445,14 +955,32 @@ quick look at the first one:
       "serviceAccountsEnabled" : false,
       "redirectUris" : ["http://localhost:8082/callback"],
       "webOrigins" : ["http://localhost:8082"],
-      "defaultClientScopes": [
+      "defaultClientScopes": 
+      [
         "openid",
         "profile",
         "email"
+      ],
+      "protocolMappers": 
+      [
+        {
+          "name": "realm roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": 
+          {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String"
+          }
+        }
       ]
     }
 
-The description above shows a client having the ID `fe`. It is enabled and uses
+The description above shows an OAuth 2.0 client named `fe-acc`. It is enabled and uses
 the Open ID Connect protocol. Our client is not *public* as stated by the property
 `"publicClient" : false`. This requires a bit more explanation.
 
@@ -462,49 +990,55 @@ are able to safely store credentials, which they can use to authenticate with
 the authorization server. Typically, these are classical web applications running
 on web or application servers. Public clients, on the other hand, are client-side 
 applications that are not able to safely store credentials. These are typically
-SPAs, mobile applications or browser-based ones. 
+SPAs (*Single Page Applications*), mobile applications or browser-based ones. 
 
 Our client is also a *regular* or *interactive* one, as stated by the property
 `"bearerOnly": false`. Another classification of the OAuth 2.0 clients, based on
-their authentication capabilities, divides them in *regular/interactive* ones, 
-who can initiate login flows, or *bearer only*, who can only validate tokens but
-cannot initiate logins. In our case, given that our application is a front end 
+their authentication capabilities, divides them in:
+
+  - *regular/interactive* ones, who can initiate login flows;
+  - *bearer only*, who can only validate tokens but cannot initiate logins. 
+
+In our case, given that our application is a front end 
 and, consequently, it is interactive, the property `"bearerOnly": false` states
 that the application is able to login on the behalf of Keycloak users.
 
 The next property in the JSON definition file above is `"standardFlowEnabled"`.
-The OAuth 2.0 protocol defines so-called *grants* or *flows*. There are several
-such flows, which one called *standard flow* or *authorization code flow*. We'll
-come back later with more details concerning the OAuth 2.0 grants or flows but,
-for now, just notice that our client uses the *standard* or *authorization code* flow.
+This is the Keycloack specific term used to designate the `authorization code`
+grant type. We'll come back later with more details concerning this grant type.
 
-Another OAuth 2.0 flow is the so-called "implicit flow", now considered 
+Another OAuth 2.0 grant type is the so-called `implicit` one, now considered 
 deprecated as not secure enough. And since it is deprecated, there is no point
 to explain it here, the only thing to notice is that our client disables the 
 implicit flow by setting to `false` the property `"implicitFlowEnabled"`.
 
-Another grant or flow type defined by the OAuth 2.0 protocol is the so-called 
-*direct access* or *resource owner password* one. When enabled, this type of 
-flow allows clients to obtain tokens directly, based on users credentials. These
-credentials are directly sent to token endpoints which directly reply with tokens,
-instead of authorization codes, like in the case of the *standard flow*. Our 
-client doesn't enable this flow, hence the property 
-`"directAccessGrantsEnabled" = false`. 
+We have mentioned previously the `resource owner password` grant type and we 
+have seen how our example application is taking advanatge of it. Again, in 
+Keycloak specific terms, the `resource owner password` gran type is called 
+*direct access*. When enabled, this type of flow allows clients to obtain tokens
+directly, based on users credentials. These credentials are directly sent to token
+endpoints which directly reply with tokens, instead of authorization codes, like
+in the case of the *standard flow* or `resource owner password`. Our 
+client doesn't enable this flow, hence the property `"directAccessGrantsEnabled"
+ = false`. 
 
-A yet another grant ot flow type defined by the OAuth 2.0 protocol is the one 
-known as *service account* or *client credentials*. Like the *direct access* flow,
-the *service account* one is able to obtain tokens directly, by providing credentials
-but, as opposed to it, these credentials aren't associated with an user and they 
+A yet another grant type defined by the OAuth 2.0 protocol, that we also have 
+precedently examined, is the `client credentials` one, also called *service 
+account* in Keycloak terms. Like the `resource owner password` grant type, this
+one is able to obtain tokens directly, by providing credentials
+but, these credentials aren't associated with an user and they 
 rather act on the own behalf of the client itself. This kind of flow is generally
 reserved to machine-to-machine communication or for all the cases where no user
 interaction is involved. It is disabled in our case.
 
 The `redirectUri` defines the URI to which the Keycloak service redirects after
-successful authentification. We're using the *standard* OAuth 2.0 flow type for our 
-`fe-client` and, hence, once successfully authenticated, the server calls the URI
-provided by the `redirectUri` property passing to it the authorization code. 
+successful authentification. We're using the `authorization code` or *standard*
+OAuth 2.0 grant type for our `fe-acc` client and, hence, once successfully 
+authenticated, the server calls the URI provided by the `redirectUri` property,
+passing to it the authorization code. 
+
 Consequently, the application needs to provide a REST endpoint listening on the
-provided URI and accepting as one of the input parameters the authorization code
+provided URI and accepting, as one of the input parameters, the authorization code
 which should be safely saved for further utilization. In our case, we expose REST
 endpoint at http://localhost:8082/callback which performs exactly the described
 operations.
@@ -519,7 +1053,7 @@ the property `webOrigins` and, if not, it rejects the requests.
 
 In OAuth 2.0, *scopes* are a mechanism to limit and control what access an application
 has to resources. They are like permissions or access rights. The property 
-`defaultScopes` allows to defines the scopes that will automatically be assigned
+`defaultScopes` allows to define the scopes that will automatically be assigned
 to every authorization request made by the client. There are two categories of 
 scopes: standard and user defined. Here we're using the following standard scopes:
 
@@ -527,3 +1061,37 @@ scopes: standard and user defined. Here we're using the following standard scope
   - `profile`: this scope allows to include into the user profile information claims like `name`, `prefered_name`, `family_name`, `given_name`, etc.
   - `email`: this scope allows to include the email address into the user profile information.
 
+The last definition element in our JSON file above is `protocolMappers`. In 
+Keycloak specific terminology, a protocol mapper is a crucial configuration piece
+allowing to modify and enhance the JWT claims. In our case, we need to use RBAC 
+and, consequently, we need to add roles information to our tokens. For example,
+the user `john`, that we use in the example application for authentication
+purposes, has the role of `manager`. We need to add this information to our JWT
+such that our `realm_access` claim includes `manager` in its `roles` list. And
+as a matter of fact, we have seen that the JWTs used by our sample application 
+include the following:
+
+    ...
+    "realm_access": 
+    {
+      "roles": 
+      [
+        "default-roles-myrealm",
+        "manager",
+        "offline_access",
+        "uma_authorization"
+      ]
+    },
+    ...
+
+This is because our Oauth 2.0 client description file contains the following 
+declarations:
+
+    ...
+    "id.token.claim": "true",
+    "access.token.claim": "true",
+    "claim.name": "realm_access.roles",
+    ...
+
+which state that the role `manager` will be included in the ID and access tokens,
+under the claim named `realm_access.roles`.
