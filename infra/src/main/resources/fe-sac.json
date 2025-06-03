@@ -8,7 +8,6 @@
   "implicitFlowEnabled" : false,
   "directAccessGrantsEnabled" : false,
   "serviceAccountsEnabled" : true,
-  "webOrigins" : ["http://localhost:8082"],
   "defaultClientScopes": [
     "openid",
     "profile",

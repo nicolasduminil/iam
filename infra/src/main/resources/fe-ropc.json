@@ -8,8 +8,6 @@
   "implicitFlowEnabled" : false,
   "directAccessGrantsEnabled" : true,
   "serviceAccountsEnabled" : false,
-  "redirectUris" : ["http://localhost:8082/callback2"],
-  "webOrigins" : ["http://localhost:8082"],
   "defaultClientScopes": [
     "openid",
     "profile",

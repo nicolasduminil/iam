@@ -1095,3 +1095,179 @@ declarations:
 
 which state that the role `manager` will be included in the ID and access tokens,
 under the claim named `realm_access.roles`.
+
+We have reviewed here the `fe-acc.json` file which describes a Keycloak client 
+which uses the `authorization code` grant type. In order to create another client
+using this time the `resource owner password` grant type, we provide the file 
+`fe-ropc.json` which is very similar to the presented one, with the following 
+differences:
+
+  - `standardFlowEnabled`: this property was `true` for the `authorization code` grant type but is `false` for the `resource owner password` one;
+  - `directAccessGrantsEnabled`: this property was `false` for the `authorization code` grant type but is `true` for the `resource owner password` one; the reason is that, as already explained, the `resource owner password` grant type is a *direct authentication* flow, as opposed to the `authorization code` one, which is a *redirection-based* flow;
+  - `redirectUris`: this property isn't any more required for the `resource owner password` grant type since it is a *direct authentication* and not a *redirect-based* one.
+
+The file `fe-sac.json`, in turn, defines a Keycloack client using the `client 
+credentials` OAuth 2.0 grant type. Exactly like the `fe-ropc.json` file, it sets
+the property `standardFlowEnabled` to `false` and it doesn't need the `redirectUris`
+one, for the same reasons. As for the `directAccessGrantsEnabled`, it is set to
+`false`. This might seem paradoxical since the `client credentials` grant type is
+also a *direct authentication* one but no, despite that, the property 
+`directAccessGrantsEnabled` specifically controls whether the client can use the
+`resource owner password` grant type. It's not related to the "directness" of 
+the authentication flow itself, but rather to the ability to directly exchange 
+user credentials (username/password) for tokens.
+
+Okay, at this point we have fully rewied our there clients created by the 
+`customize.sh` script. Once that these three clients have been created, we also
+need to create the role `manager` and to assign it to the user `john`. This user
+allows to login against the Keycloak server. However, in the case of the `client 
+credentials` grant type, there is no longer any user but the client ID and secret
+are provided as credentials. And since there isn't any explicir user, an automatic
+one, created by the Keycloak server, named `service-account-fe-sac`, is used. 
+The naming convention here is `service-account-<clientID>`. Assigning the role 
+`manager` to this automatic user means having this role upon logging in with 
+the client ID `fe-sac` and its associated secret.
+
+We just have deconstructed here the script `customize.sh` in order to fully 
+analyse the cutomization process that it performs on the newly created Keycloak
+security realm. This script is executed on the Keycloak Docker image by `run.sh`
+which, once done, continues by getting back the secrets associated 
+with our three clients, `fe-acc`, `fe-ropc` and, respectivelly, `fe-sac`.
+Once retrived, these secrets are exported to the global environment variables 
+`FE_ACC_SECRET`, `FE_ROPC_SECRET` and, respectivelly `FE_SAC_SECRET` and passed
+to the `iam-frontend` and `iam-backend` containers, via `-e ...` options. This 
+way, both the `iam-frontend` and `iam-backend` services have access to the 
+clients' secrets, by injecting them via the Quarkus MP Config implementation,
+as follows:
+
+      ...
+      @ConfigProperty(name = "FE_ACC_SECRET")
+      protected String clientSecret;
+      ...
+
+We came here at the end of our long and detailed presentation of the module 
+`infra` of our example application. The next sections will give you a solid 
+understanding of the other modules, as well as of the OpenID Connect and OAuth 
+2.0 specifications.
+
+## The `front-end` module
+
+This module is our GUI (*Graphical User Interface*) and, as mentioned precedently,
+it is using Jakarta Faces for building web components and, more specifically, 
+PrimeFaces. Quarkus provides two extensions for PrimeFaces, as shown in the 
+`pom.xml` file fragment below:
+
+    ...
+    <dependency>
+      <groupId>io.quarkiverse.primefaces</groupId>
+      <artifactId>quarkus-primefaces</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.primefaces</groupId>
+      <artifactId>quarkus-primefaces-extensions</artifactId>
+    </dependency>
+    ...
+
+Including that in your Maven build process it's enough to take advantage, in your
+quarkus application, of the full Jakarta Faces power.
+
+Quarkus provides many frontend development solutions like Qute, Quinoa, Renarde
+and, in general, any HTML and JavaScript based web framework, runnning on the 
+client side, is supported. However, Quarkus is a Java stack and, as such, it seems
+quite legitimate to privilege pure Java solutions. Accordingly, it won't surprize
+anyone that, in our Java sample application, we decided to privilege pure Java 
+solutions, instead of HTML and JavaScript libraries based ones.
+
+Jakarta Faces isn't the only pure Java solution for web applications with Quarkus.
+It also supports Vaadin, via the `vaadin-quarkus-extension`. But again, it won't
+suprize anyone that, having to choose between a mainstream Java technology, 
+formalized as a standard through the JCP (*Java Community Process*), and an
+open source Java library with convoluted history and opaque evolution, I choose
+Jakarta Faces.
+
+Our `front-end` module is constructed around the Facelets *template* concept. Facelets
+is the default view declaration language for Jakarta Faces, specifically designed
+to support its component model and to provide advanced capabilities like:
+
+  - templates: base layouts defining the application's pages common structure;
+  - compositions: advanced techniques able to build complex web pages by combining multiple XHTML files in a modular and reusable way; it's based on a template/client model where pages can be assembled from various components;
+  - includes: a powerful feature allowing to define reusable content fragments;
+  - decorators: a specialized form of templating that allows to wrap or enhance existing content without replacing it entirely; they provide a way to add common elements or behavior around existing content while maintaining the original structure.
+
+The templating system proposed by Facelets is a powerful capability which highly 
+facilitates the component reuse, on the behalf of techniques like insertion points
+and parameter passing. Let's have a look at our `front-end` Facelets templates.
+
+### The template layer
+
+Our `front-end` web application has a master template, named `template.xhtml`, 
+and a secondary one, named `keycloak-template`, both located at 
+`src/main/resources/META-INF/resources/templates`. The listing below reproduces
+partially the `template.xhtml` file:
+
+    <?xml version='1.0' encoding='UTF-8' ?>
+    <html ... >
+      <f:view contentType="text/html" encoding="UTF-8">
+        <h:head>
+         ...
+          <title>
+            <ui:insert name="title">Please add a proper title for this page !</ui:insert>
+          </title>
+        </h:head>
+        <h:body ...>
+          <h:form id="navForm" style="flex: 1 0 auto;">
+            <ui:insert name="menu"/>
+            <ui:insert name="pageTitle">Default Page Title</ui:insert>
+            <ui:param name="note1" value="#{msgs.note1}"/>
+            <ui:param name="note2" value="#{msgs.note2}"/>
+            <p:panel style="margin: 0; height: 100%;">
+              <h:panelGrid columns="2" style="width: 50%;">
+                <h:graphicImage value="/img/simplex.png" alt="Simplex logo"/>
+                <h:panelGroup>
+                  ...
+                  <div style="fontfamily: Garamond; font-size: 0.70em;">
+                    <ui:insert name="legend">Default legend</ui:insert>
+                  </div>
+                </h:panelGroup>
+              </h:panelGrid>
+            </p:panel>
+          </h:form>
+          <p:panel id="content" style="flex: 1 0 auto; margin: 0;">
+            <ui:insert name="content"/>
+          </p:panel>
+          <div ...>
+            <p style="font-size: 0.85em;">
+              <ui:insert name="footer">Default footer</ui:insert>
+            </p>
+          </div>
+        </h:body>
+      </f:view>
+    </html>
+
+We have hidden from the listing above less relevant elements like namespaces,
+as well as very long style elements, which would only make the reading difficult.
+Looking carefully at this file, we can notice that it contains several sections,
+insertion points and parameter defintions.
+
+The first section is the view configuration, defined by the `<f:view>` element,
+which ensures proper `text/html` content type and `UTF-8` encoding. Then the 
+`<head>` section properly handles CSS inclusion (removed from the listing above
+in order to facilitate reading) and provides an insertion point for the page 
+title. This is done by the `<ui:insert.../>` element.
+
+The next section is the `<h:body.../>` which style elements were hidden from the
+listing, for the same reasons. It contains the main application form, as a 
+`<h:form.../>` component. Here we have several insertion points, for the page
+menu and the page title, as well as two display sections which content is defined
+by the `<ui:param.../>` directives.
+
+Our template also includes a logo and a notes panel in the form of an insert 
+point named `legend`. Then comes the `content` area that, as its name implies,
+will provide the main aplication visual content, followed by the `footer`
+insert point.
+
+So this is out master template. It uses quite a lot of inline styles, that you 
+colud see in the file but not in the listing above, as they were removed. These
+styling elememnts should probably be moved in CSS files, for better maintainability.
+Also, using in these files CSS classes instead of inline styles, would be another
+improvement of the template readability.
