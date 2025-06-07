@@ -26,7 +26,6 @@ public class AuthorizationCodeView extends AbstractCommonView<AuthorizationCodeT
   String sandBoxRedirect;
   @ConfigProperty(name = "FE_ACC_SECRET")
   protected String clientSecret;
-  public String issuer;
 
   private AuthorizationCodeLoginRequest authorizationCodeLoginRequest = new AuthorizationCodeLoginRequest();
 

@@ -143,11 +143,6 @@ public abstract class AbstractCommonView<T extends OAuth20Request>
     this.serviceData = serviceData;
   }
 
-  /*public T getTokenRequest()
-  {
-    return tokenRequest;
-  }*/
-
   public void loadDiscovery()
   {
     if (StringUtils.isEmpty(discoveryData.getDiscoveryJson()))

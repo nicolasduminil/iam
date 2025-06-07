@@ -5,14 +5,11 @@
   <h:panelGrid columns="1" cellpadding="7" styleClass="mb-3">
     <p:outputLabel for="@next" value="Issuer URI:"/>
     <p:inputText size="40" maxlength="255"
-                 value="#{authorizationCodeView.issuer}" required="true">
-      <f:validateLength minimum="30"/>
-    </p:inputText>
-    <p:message for="@previous" display="icon"/>
+      value="#{authorizationCodeView.issuer}" readonly="true"/>
     <p:commandButton
       value="#{empty authorizationCodeView.discoveryData.discoveryJson ? 'Discover' : (authorizationCodeView.discoveryData.showDiscoveryJson ? 'Hide Details' : 'Show Details')}"
       update="@form"
-      process="@this @previous @previous"
+      process="@this"
       action="#{authorizationCodeView.loadDiscovery}"
       icon="#{empty authorizationCodeView.discoveryData.discoveryJson ? 'pi pi-check' : (authorizationCodeView.discoveryData.showDiscoveryJson ? 'pi pi-eye-slash' : 'pi pi-eye')}"/>
   </h:panelGrid>

@@ -1266,8 +1266,387 @@ point named `legend`. Then comes the `content` area that, as its name implies,
 will provide the main aplication visual content, followed by the `footer`
 insert point.
 
-So this is out master template. It uses quite a lot of inline styles, that you 
-colud see in the file but not in the listing above, as they were removed. These
-styling elememnts should probably be moved in CSS files, for better maintainability.
+So this is our master template. It uses quite a lot of inline styles, that you 
+could see in the file but not in the listing above, as they were removed. These
+styling elements should probably be moved in CSS files, for better maintainability.
 Also, using in these files CSS classes instead of inline styles, would be another
 improvement of the template readability.
+
+In addition to the master template discussed above we have the following secondary
+template (`keycloak-template.xhtml`):
+
+    <ui:composition template="/templates/template.xhtml" ...>
+      <ui:define name="title">Keycloak Identity Provider</ui:define>
+      <ui:define name="pageTitle">
+        <h1>Welcome to the Keycloak Sandbox</h1>
+      </ui:define>
+      <ui:define name="legend">
+        ...
+      </ui:define>
+      <ui:param name="note1" value="The Keycloak server is running as a Docker image !"/>
+      <ui:param name="note2" value="Here are some of the features this service provides:"/>
+      <ui:define name="menu">
+        <ui:include src="/menu/menu.xhtml"/>
+      </ui:define>
+      <ui:define name="footer">
+        Powered by <a href="https://quarkus.io/" style="color: #000;">Quarkus</a>
+        and <a href="https://www.primefaces.org/" style="color: #000;">PrimeFaces</a>
+        <br/>
+        <span style="font-size: 0.65em;">&#169; 2024
+          <a href="http://www.simplex-software.fr">Simplex Software</a>
+        </span>
+      </ui:define>
+    </ui:composition>
+
+
+This secondary template is based on the first one, as stated by the 
+`<ui:composition...>` directive. It defines the sections named `title`, 
+`pageTitle` and `legend` for all the applications XHTML pages. It also 
+initializes the display sections defined by the master template as `note1` and 
+`note2`, after which it declares the application menu as an insert point of the
+`menu.xhtml` file.
+
+Last but not least, the secondary template defines the `footer` for all the 
+application's XHTML pages, as including links to the Quarkus, PrimeFaces and the
+author's websites.
+
+### The include points layer
+
+We basically have two important include points defined with our Facelets templates:
+
+  - the one named `content`, declared in the master template;
+  - the one named `menu`, declared in the secondary template.
+
+There are several others include point declared in the master template but they 
+are all defined in the secondary template and we have discussed them. 
+
+Let's start with the `menu` include point, declared in the `template.xhtml` file
+and defined in the `keycloak-template.xhtml` file, as including the `menu.xhtml`
+file:
+
+    <ui:composition xmlns="http://www.w3.org/1999/xhtml" ...> 
+      <p:menubar id="navBar">
+        <p:menuitem id="home" value="Home" url="/index.xhtml"/>
+        <p:submenu id="oauth20-grant-type-id" label="OAuth 2.0 Grant Type">
+          <p:menuitem id="authorization-code-id" value="Authorization code"
+            url="/keycloak/authorization-code.xhtml"/>
+          <p:menuitem id="resource-owner-password-id" value="Resource owner password"
+            url="/keycloak/resource-owner-password.xhtml"/>
+          <p:menuitem id="resource-owner-password-id" value="Client credentials"
+            url="/keycloak/client-credentials.xhtml"/>
+        </p:submenu>
+      </p:menubar>
+    </ui:composition>
+
+This is the definition of our sample application menu bar. The listing above uses
+the PrimeFaces `p:menubar` component. This is a navigation component that creates
+a horizontal menu bar, with support for `p:menuitem` and `p:submenu` components.
+A menu item, in PrimeFaces, navigates to individual actions while a submenu 
+allows to group together several menu items.
+
+The `menu.xhtml` file above defines a menu bar having a menu item which, when 
+clicked, will navigate to the `/index.html` URI. A submenu labeled `OAuth 2.0
+Grant Type` is also available and, when clikcked, it will give access to other 
+three menu items, labeled `Authorization code`, `Resource owner password` and, 
+respectivelly, `Client credentials`, which navigate to the `/keycloak/authoriza
+tion-code.xhtml`, `/keycloak/resource-owner-password.xhtml` and, respectivelly,
+`/keycloak/client-credentials.xhtml` URIs. The idea here is, as you probably
+guessed, to provide a submenu able to select an OAuth 2.0 grant type and to fire
+the associated URI.
+
+Let's look now at one of the files which are a part of the action URI, for example
+`keycloak/authorization-code.xhtml`.
+
+    <ui:composition template="/templates/keycloak-template.xhtml" ...>
+      <ui:define name="title">Using the OAuth 2.0 authorization code grant</ui:define>
+      <ui:define name="content">
+        <h3>Using the Keycloak Identity Provider for OIDC Authentication</h3>
+        <h:form id="form-authorization-code">
+          <p:growl id="msgs" showDetail="true" skipDetailIfEqualsSummary="true"/>
+          <div class="card">
+            <h5>Authorization code sandbox</h5>
+            <p:tabView id="tabs-authorization-code" activeIndex="#{param.activeIndex}">
+              <p:tab id="discovery-authorization-code-tab" title="1. Discovery">
+                <ui:include id="include-discovery-authorization-code-tab" src="../tabs/discovery-authorization-code-tab.xhtml"/>
+              </p:tab>
+              <p:tab id="login-authorization-code-tab" title="2. Authentication">
+                <ui:include id="include-login-authorization-code-tab" src="../tabs/login-authorization-code-tab.xhtml"/>
+              </p:tab>
+              <p:tab id="token-authorization-code-tab" title="3. Token">
+                <ui:include id="include-token-authorization-code-tab" src="../tabs/token-authorization-code-tab.xhtml"/>
+              </p:tab>
+              <p:tab id="refresh-authorization-code-tab" title="4. Refresh Token">
+                <ui:include id="include-refresh-authorization-code-tab" src="../tabs/refresh-authorization-code-tab.xhtml"/>
+              </p:tab>
+              <p:tab id="userinfo-authorization-code-tab" title="5. UserInfo">
+                <ui:include id="include-userinfo-authorization-code-tab" src="../tabs/userinfo-authorization-code-tab.xhtml"/>
+              </p:tab>
+              <p:tab id="invoke-service-authorization-code-tab" title="6. Invoke Service">
+                <ui:include id="include-invoke-service-authorization-code-tab" src="../tabs/invoke-service-authorization-code-tab.xhtml">
+                  <ui:param name="backingBean" value="#{authorizationCodeView}"></ui:param>
+                </ui:include>
+              </p:tab>
+              <p:tab id="reset-authorization-code-tab" title="Reset">
+                <ui:include id="include-reset-authorization-code-tab" src="../tabs/reset-authorization-code-tab.xhtml">
+                  <ui:param name="backingBean" value="#{authorizationCodeView}"></ui:param>
+                </ui:include>
+              </p:tab>
+            </p:tabView>
+          </div>
+        </h:form>
+      </ui:define>
+    </ui:composition>
+
+The structure of the XHTML page above is simple: it uses a PrimeFaces `p:tabView`
+component and dedicates a separate tab to each supported function: 
+
+  - discovery;
+  - authentication;
+  - token;
+  - refresh token;
+  - user info;
+  - invoke service;
+  - reset.
+
+We've already seen how each one of these function works. Let's look now at how 
+they are implemented.
+
+### The *authorization code* grant type
+
+The *authorization code* is the most common grant type provided by the OAuth 2.0
+specifications and Keycloak supports it, of course, through its OpenID Connect
+implementation.
+
+In summary, in order to allow a user access to protected resources with this grant
+type, an application redirects to the Keycloak server, which displays a login 
+page to authenticate the user. Then, the Keycloak server calls an application's
+predefined endpoint with an `authorization code`. Finally, the application can 
+exchange this `authorization code` against an ID token, which contains information
+about the user. In the following diagram, the `authorization code` flow is shown
+in more detail:
+
+![authorization code](acc.png)
+
+In order for the described process to happen, the Keycloak server exposes an 
+`authorization code` request endpoint, which URL is provided by the *discovery* 
+endpoint. As we have seen previously, the OpenID Connect specifications define 
+a specific endpoint which, when invoked, replies with the so-called *OpenID 
+Connect Provider Metadata*. This is a standardized set of configuration 
+information that an OpenID Connect provider, like Keycloak, publishes. It includes,
+among others, the `authorization code` request endpoint. This endpoint, which 
+exposes this standardized set of configuration information is named, in Keycloak
+terminology, the *discovery* endpoint.
+
+
+#### Discovery
+
+The `discovery-authorization-code-tag.xhtml` page, representing the include point
+with the same name in the `authorization-code.xhtml` file, is taking advantage 
+of this functionality:
+
+    <ui:composition ... >
+      <h:panelGrid ...>
+        <p:outputLabel for="@next" value="Issuer URI:"/>
+        <p:inputText ...
+          value="#{authorizationCodeView.issuer}" required="true">
+          <f:validateLength minimum="30"/>
+        </p:inputText>
+        <p:message for="@previous" display="icon"/>
+        <p:commandButton
+          value="..."
+          update="@form"
+          process="@this @previous"
+          action="#{authorizationCodeView.loadDiscovery}"
+          icon="..."/>
+      </h:panelGrid>
+      ...
+      <p:outputPanel ...>
+        <p:outputLabel for="@next" value="Keycloak OpenID Connect provider configuration"
+          rendered="..."/>
+        <p:inputTextarea value="#{authorizationCodeView.discoveryData.discoveryJson}" .../>
+      </p:outputPanel>
+    </ui:composition>
+
+The listing above reproduces a simplified version of the `discovery-authorization
+-code-tag.xhtml` page in which we replaced by "..." the inline style details and 
+some other less relevant information. In order to get the full understanding of 
+how things work, please refer to the original file.
+
+The page wraps in a `panelGrid` component an `inputText` containing the issuer 
+URI together with a `commandButton` that, when clicked, invokes the `loadDiscovery()`
+method on the associated backing bean. The `inputText` is initialized with the 
+standard Keycloak issuer URI, but you can modify it, if necessary. It requires 
+validation of its length, which cannot be inferior to 30 characters, given the 
+important extent of all the Keycloak URIs.
+
+Please notice the use of the so-called "PrimeFaces relative location" feature 
+that allows to avoid using components IDs, which might represent an obstacle in
+the components re-utilisation, by replacing them with constructs like `for="@next"`.
+Also, please notice the `update="@form"` construct which has the effect of 
+updating the current form once that the button was clicked, as well as the 
+`process="@this"` one which means that the action associated to the button should
+fire regardless of the including form state.
+
+The backing bean associated to this XHTML page is the `AuthorizationCodeView` 
+Java class. The following class diagram shows this class' hierarchy:
+
+<img src="AuthorizationCodeView.png" width="400" height="400" />
+
+As you can see, our backing bean is a CDI (*Context and Dependency Injection*) 
+bean having the `ApplicationScoped`. It extends a generic abstract base class, 
+named `AbstractCommonView`, in order to provide shared functionalities between
+all the application's backing beans. The class is parametrized with the generic
+type parameter `AuthorizationCodeTokenRequest`which implements `OAuth20Request`.
+
+The action associated with the discovery function is the method `loadDiscovery()`
+below:
+
+    public void loadDiscovery()
+    {
+      if (StringUtils.isEmpty(discoveryData.getDiscoveryJson()))
+      {
+        discoveryData.setDiscoveryJson(util.prettyPrintJsonB(discoveryData.getDiscovery()));
+        discoveryData.setShowDiscoveryJson(true);
+      }
+      else
+        discoveryData.setShowDiscoveryJson(!discoveryData.isShowDiscoveryJson());
+    }
+
+This extremly simple method initializes the `discoveryJson` and 
+`showDiscoveryJson` properties of the `DiscoveryData` class with the content 
+of the `discovery` property. This last property is, in turn, initialized with 
+the already mentioned OpenID Connect Metadata, as follows:
+
+    @PostConstruct
+    public void postConstruct()
+    {
+      discoveryData.setDiscovery(clientManager.getClient()
+        .target(issuer + discoveryEndpoint)
+        .request(MediaType.APPLICATION_JSON)
+        .get(new GenericType<>() {}));
+    }
+
+This method is automatically executed as soon as any `AbstractCommonView` extension
+class is instantiated. It performs an HTTP GET request to the discovery endpoint
+and it initializes with its result the `discovery` property of the `DiscoveryData`
+class. The discovery endpoint is defined using the Quarkus implementation of the
+Eclipse MP Config specifications, as shown below:
+
+    @ConfigProperty(name = "quarkus.oidc.auth-server-url")
+    String issuer;
+    @ConfigProperty(name = "keycloak.discovery.endpoint")
+    String discoveryEndpoint;
+
+These properties are defined in the `application.properties` file:
+
+    quarkus.keycloak.admin-client.server-url=http://localhost:8080
+    keycloak.realm=myrealm
+    quarkus.oidc.auth-server-url=${quarkus.keycloak.admin-client.server-url}/realms/${keycloak.realm}
+    keycloak.discovery.endpoint=/.well-known/openid-configuration
+
+Accordingly, the URL targeted by the HTTP GET request above is: 
+http://localhost:8080/realms/myrealm/.well-known/openid-configuration,
+where `myrealm` is the name chosen for the security realm used by the example 
+application.
+
+#### Authentication
+
+The `login-authorization-code-tab.xhtml` page is designed such that to collect
+all the data required to request an `authorization code` by posting an 
+`authorization code` request to the dedicated endpoint exposed by the Keycloak 
+server. This request staisfies the following HTTP template:
+
+    GET /realms/myrealm/protocol/openid-connect/auth?
+      response_type=code&
+      client_id=[CLIENT_ID]&
+      redirect_uri=[REDIRECT_URI]&
+      scope=[SCOPE]&
+      prompt=[PROMPT]&
+      max_age=[MAX_AGE]
+
+This is exactly what our sample application is doing on the behalf of the 
+`login-authorization-code-tab.xhtml` page, together with its associated backing
+bean. It's pointless to reproduce here the code of this page, all the more so 
+as it's quite complex, but the reader is urged to not hesitate to carefully study
+it, such that to make sure to understand how it works.
+
+Two `commandButton` components are esential here: 
+
+  - a first one which generates the `authorization code` request, once that all the required data has been collected;
+  - a second one that, when clicked, sends the `authorization code` request to the dedicated endpoint exposed by the Keycloak server.
+
+We reproduce below the listing of the `generateAuthRequest()` method who, as 
+its name implies, generates the HTTP request required to get an `authorization 
+code`:
+
+    public void generateAuthRequest()
+    {
+      if (getDiscoveryData().getDiscovery() == null || getDiscoveryData().getDiscovery().isEmpty())
+      {
+        getUtil().facesErrorMessage("Discovery document not loaded");
+        getAuthData().setShowAuthRequest(false);
+      }
+      else if (StringUtils.isEmpty(getAuthData().getAuthRequest()))
+      {
+        String authEndpoint = (String) getDiscoveryData().getDiscovery().get("authorization_endpoint");
+        try
+        {
+          String redirectUri = getUtil().getRedirectUri(getRealm(), authorizationCodeLoginRequest.getClientId());
+          authorizationCodeLoginRequest.setRedirectUri(redirectUri);
+          URI authUri = authorizationCodeLoginRequest.buildAuthUri(authEndpoint);
+          getAuthData().setAuthRequest(authUri.toString());
+          getAuthData().setFormattedAuthRequest(getUtil().formatRequest(authUri));
+          getAuthData().setShowAuthRequest(true);
+        }
+        catch (NoSuchClientException ex)
+        {
+          getUtil().facesErrorMessage(ex.getMessage());
+          getAuthData().setShowAuthRequest(false);
+        }
+      }
+      else
+        getAuthData().setShowAuthRequest(!getAuthData().isShowAuthRequest());
+    }
+
+The *sine qua non* condition to generate an `authorization code` request is that
+the discovery data have been loded. This should be automatically the case as the 
+operation is performed by a `@PostConstruct` method. 
+
+If a `authorization code` hasn't already been requested and received, then we 
+can do it now. First, we need to get the server's `authorization code` request 
+endpoint. This is done by extracting it from the OpenID Connect Metadata.
+
+The next step is to get the redirect URI defined for the current OAuth 2.0 client.
+This is done by invoking the method `getRedirectUri()` in the class `Util`.
+
+    public String getRedirectUri(String realm, String clientId) throws NoSuchClientException
+    {
+      try
+      {
+        String uri = keycloak.realm(realm).clients()
+          .findByClientId(clientId).getFirst().getRedirectUris().getFirst();
+        if (!isValidUrl(uri))
+          throw new IllegalArgumentException("Invalid redirect URI %s for client ID %s"
+            .formatted(uri, clientId));
+        return uri;
+      }
+      catch (Exception ex)
+      {
+        if (ex instanceof IllegalArgumentException)
+          throw new NoSuchClientException(ex.getMessage());
+        throw new NoSuchClientException("There is no valid Keycloak client with ID %s"
+          .formatted(clientId));
+      }
+    }
+
+This method takes as input argument the name of the current security realm and
+the client ID. It returns the redirect URI associated to the client identified 
+by the ID or it throws a `NotSuchClientException`, if the required client isn't
+found, whatever the reason might be. In order to get the client list in the realm,
+to find the one having the given ID and to get its URI, we use here the injected
+class `org.keycloak.admin.client.Keycloak`. 
+
+Once we got the redirect URI associated to the OAuth 2.0 client, we store it in
+the instance of the `AuthorizationCodeLOginRequest` class and initialize the 
+`AuthData` such that to display in the `Authentication` tab the `authorization 
+code` request.
