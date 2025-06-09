@@ -1647,6 +1647,369 @@ to find the one having the given ID and to get its URI, we use here the injected
 class `org.keycloak.admin.client.Keycloak`. 
 
 Once we got the redirect URI associated to the OAuth 2.0 client, we store it in
-the instance of the `AuthorizationCodeLOginRequest` class and initialize the 
+the instance of the `AuthorizationCodeLoginRequest` class and initialize the 
 `AuthData` such that to display in the `Authentication` tab the `authorization 
-code` request.
+code` request. Clicking on the `Send authoriztion request` button, this just 
+generated `authorization request` will be sent to the Keycloak server which, 
+according to the OAuth 2.0 specifications, will respond by posting the requested
+`authorization code` to the `redirect_uri` that, in our case, was 
+http://localhost:8082/callback. The following REST service is listening on this
+endpoint:
+
+    @ApplicationScoped
+    @Path("/callback")
+    public class AuthorizationCodeRedirectCallbackService
+    {
+      @ConfigProperty(name = "iam-frontend.sandbox-redirect")
+      String sandBoxRedirect;
+      @ConfigProperty(name = "iam-frontend.error-redirect")
+      String errorRedirect;
+      private String authCode;
+
+      @GET
+      public Response handleCallback(@QueryParam("code") String code,
+        @QueryParam("error") String error,
+        @QueryParam("error_description") String errorDescription)
+      {
+        Response response = null;
+        if (error != null)
+        {
+          switch (error)
+          {
+            case "access_denied":
+              response = Response.temporaryRedirect(UriBuilder.fromPath(errorRedirect)
+                .queryParam("error", "access_denied")
+                .queryParam("message", "Access was denied")
+                .build()).build();
+              break;
+            case "invalid_request":
+              response = Response.temporaryRedirect(UriBuilder.fromPath(errorRedirect)
+                .queryParam("error", "invalid_request")
+                .queryParam("message", "An invalid request has been received")
+                .build()).build();
+              break;
+            default:
+              response = Response.temporaryRedirect(UriBuilder.fromPath(errorRedirect)
+                .queryParam("error", "login_failure")
+                .queryParam("message",
+                "The login has failed. Consider adjusting the\"prompt\" parameter")
+                .build()).build();
+          }
+        }
+        else
+        {
+          authCode = code;
+          response = Response.temporaryRedirect(UriBuilder.fromPath(getSandBoxRedirect())
+            .queryParam("activeIndex", "1").build()).build();
+        }
+        return response;
+      }
+    ...
+    }
+
+So the Keycloak server sends a GET HTTP request to our `redirect_uri` endpoint 
+with the `authorization code` and, in the case of a failure, an `error` and an 
+`error_description` string. If everything is okay, the `authorization code` is 
+cached by the `AuthorizationCodeRedirectCallbackService` class and the control 
+is returned to our UI `tabView`, which URI is injected using the Quarkus MP 
+Config implementation. Then, the backing bean `AuthorizationCodeView` gets the
+`authorization code` by invoking the following method:
+
+    public String getAuthCode()
+    {
+      if (getAuthData().getAuthCode() == null && getAuthData().isShowAuthRequest())
+        getAuthData().setAuthCode(authorizationCodeRedirectCallbackService.getAuthCode());
+      return getAuthData().getAuthCode();
+    }
+
+This code takes the `authorization code` cached by the injected instance of the 
+`AuthorizationCodeRedirectCallbackService` and makes it available to the caller.
+
+#### Token
+
+Now, that we have the `authorization code`, we can exchange it agains an OpenID
+Connect token:
+
+    public void sendTokenRequest() throws InvalidTokenException
+    {
+      try (Response response = actionGetTokenResponse())
+      {
+        Map<String, Object> map = response.readEntity(new GenericType<>() {});
+        String[] tokenParts = extractTokenData(map);
+        getTokenData().setHeaderJson(getUtil().prettyPrintJsonB(new String(Base64.getUrlDecoder()
+          .decode(tokenParts[0]), StandardCharsets.UTF_8)));
+        getTokenData().setPayloadJson(getUtil().prettyPrintJsonB(new String(Base64.getUrlDecoder()
+          .decode(tokenParts[1]), StandardCharsets.UTF_8)));
+        getTokenData().setIdTokenSignature(tokenParts[2]);
+        getTokenData().setTokenResponse(getUtil().prettyPrintJsonB(getUtil().truncateTokens(map)));
+      }
+      catch (InvalidTokenException e)
+      {
+        getUtil().facesErrorMessage(e.getMessage());
+      }
+    }
+
+The method above is a part of the class `AbstarctCommonView`, the base class of 
+`AuthorizationCodeView` and all the others backing bean. It is common to them all.
+Here, the method `actionGetTokenResponse()` id doing the major part of the work:
+
+    private Response actionGetTokenResponse()
+    {
+      tokenRequest = createTokenRequest();
+      tokenRequest.setClientSecret(getClientSecret());
+      String tokenEndpoint = (String) getDiscoveryData().getDiscovery().get("token_endpoint");
+      getTokenData().setFormattedTokenRequest(getUtil()
+        .formatRequest(tokenRequest.buildTokenUri(tokenEndpoint)));
+      return getClientManager().getClient().target(tokenEndpoint)
+        .request(MediaType.APPLICATION_JSON)
+        .post(Entity.form(tokenRequest.toForm()));
+    }
+
+As you can see, the first thing to do is to invoke the abstract method `createTokenRequest()`
+which, in the case of the `authorization code` grant type, returns an instance of
+`AuthorizationCodeTokenRequest` class. It returns different implementations of 
+`OAuth20Request` implementations, depending on the current grant type, hence the
+use of the abstract base class.
+
+Once instatiated, the request is initialized with the associated client secret 
+and an HTTP POST request is sent to the Keycloak server token access endpoint. 
+Please notice also that, for the demon purposes, the ID token is displayed in a
+decoded format.
+
+#### Token Refresh
+
+So we were able to showcase how the Keycloak server implements the `authorization
+code` grant type of the OAuth 2.0 specifications and to obtain an ID token. Now,
+clicking on the `Refresh` tab, we can refresh our token:
+
+    <ui:composition ...>
+      <p:panelGrid columns="1" cellpadding="7"...>
+        <p:commandButton value="Send Refresh Request"
+          update="@parent" process="@this"
+          action="#{authorizationCodeView.sendRefreshRequest()}" .../>
+        <p:outputLabel for="@next" value="Refresh request:" .../>
+        <p:inputTextarea readonly="true" ...
+          value="#{authorizationCodeView.tokenData.formattedRefreshRequest}" />
+        <p:outputLabel for="@next" value="Refresh response:" .../>
+        <p:inputTextarea readonly="true" ...
+          value="#{authorizationCodeView.tokenData.refreshResponse}" />
+        <p:outputLabel for="@next" value="ID Token payload:" .../>
+        <p:inputTextarea readonly="true" ...
+          value="#{authorizationCodeView.tokenData.refreshPayloadJson}"/>
+      </p:panelGrid>
+    </ui:composition>
+
+The XHTML page above expose an action to refresh the current ID token and, once
+done, it displays the newly refreshed token. The action `sendRefreshRequest()` is
+shown below:
+
+    public void sendRefreshRequest()
+    {
+      RefreshRequest refreshRequest = new RefreshRequest(authorizationCodeLoginRequest.getClientId(),
+        authorizationCodeLoginRequest.getScopes(), getTokenData().getRefreshToken());
+      refreshRequest.setClientSecret(clientSecret);
+      String tokenEndpoint = (String) getDiscoveryData().getDiscovery().get("token_endpoint");
+      getTokenData().setFormattedRefreshRequest(getUtil().formatRequest(refreshRequest.buildTokenUri(tokenEndpoint)));
+      try (Response response = getClientManager().getClient().target(tokenEndpoint)
+        .request(MediaType.APPLICATION_JSON)
+        .post(Entity.form(refreshRequest.toForm())))
+      {
+        Map<String, Object> map = response.readEntity(new GenericType<>() {});
+        getTokenData().setIdToken((String) map.get("id_token"));
+        getTokenData().setRefreshToken((String) map.get("refresh_token"));
+        getTokenData().setRefreshResponse(getUtil().prettyPrintJsonB(getUtil().truncateTokens(map)));
+        String[] idTokenParts = getTokenData().getIdToken().split("\\.");
+        getTokenData().setRefreshPayloadJson(getUtil().prettyPrintJsonB(new String(Base64.getUrlDecoder()
+         .decode(idTokenParts[1]), StandardCharsets.UTF_8)));
+      }
+    }
+
+This method is very similar to the `sendTokenRequest` that we have examined 
+previously. 
+
+#### UserInfo
+
+The next thing to look at is the `user-info` function:
+
+    <ui:composition ...>
+      <p:panelGrid columns="1" cellpadding="7" ...>
+        <p:commandButton value="Send UserInfo Request" 
+          action="#{authorizationCodeView.sendUserInfoRequest()}" .../>
+        <p:outputLabel for="@next" value="UserInfo request:" .../>
+        <p:inputText 
+          value="#{authorizationCodeView.userInfoData.formattedUserInfoRequest}" .../>
+        <p:outputLabel for="@next" value="UserInfo response:" .../>
+        <p:inputTextarea readonly="true" ...
+          value="#{authorizationCodeView.userInfoData.userInfoResponse}" />
+      </p:panelGrid>
+    </ui:composition>
+
+This is the `userinfo-authorization-code-tab.xhtml` page that works exactly the
+same as the `token-authorization-code-tab.xhtml` which we have examined above.
+We expose a `Send UserInfo Request` button that triggers the action `sendUserInfoRequest()`
+and displays the response.
+
+    public void sendUserInfoRequest()
+    {
+      String userInfoEndpoint = (String) getDiscoveryData().getDiscovery().get("userinfo_endpoint");
+      getUserInfoData().setFormattedUserInfoRequest(getUtil().formatRequest(URI.create(userInfoEndpoint)));
+      try
+      {
+        getUserInfoData().setUserInfoResponse(getUtil().prettyPrintJsonB(getClientManager().getClient().target(userInfoEndpoint)
+          .request(MediaType.APPLICATION_JSON)
+          .header("Authorization", "Bearer " + getTokenData().getAccessToken())
+          .get(String.class)));
+      }
+      catch (Exception e)
+      {
+        getUtil().facesErrorMessage("User info response: %s".formatted(e.getMessage()));
+      }
+    }
+
+As you can see, this action is similar to the ones explained before but, as 
+opposed to them, it includes the `Authorization` header in the HTTP request. This
+allows the Keycloak server to decode the current user details and to return them,
+such that we could display it in our XHTML page.
+
+#### Invoke service
+
+The last thing to discuss is the backend invocation. Our backend is a very 
+simple one, as the listing below is showing:
+
+    @ApplicationScoped
+    @Path("be")
+    @Produces(MediaType.TEXT_PLAIN)
+    public class BackEndService
+    {
+      private final static Logger log = LoggerFactory.getLogger(BackEndService.class);
+      @Inject
+      SecurityIdentity securityIdentity;
+
+      @GET
+      @Path("secured")
+      @RolesAllowed("manager")
+      public Response getSecuredMessage()
+      {
+        log.info("Principal: %s".formatted(securityIdentity.getPrincipal().getName()));
+        log.info("Roles: %s".formatted(securityIdentity.getRoles()));
+        log.info("Is Anonymous: " + securityIdentity.isAnonymous());
+        return Response.ok().entity("Secured message").build();
+      }
+
+      @GET
+      @Path("public")
+      @PermitAll
+      public Response getPublicMessage()
+      {
+        return Response.ok().entity("Public message").build();
+      }
+    }
+
+This REST API consists in two endpoints:
+
+  - a public one allowing any user's access, thanks to the `@PermitAll` annotation;
+  - a secured one which uses RBAC and only allows access of the users having the `manager` role, thanks to the `@RolesAllowed` annotation.
+
+Invoking these endpoints from our front-end is very simple:
+
+    public void invokePublicService()
+    {
+      getServiceData().setPublicServiceResponse(getClientManager().getClient()
+        .target(getPublicServiceUrl()).request().get(String.class));
+    }
+
+    public void invokeSecuredService()
+    {
+      try
+      {
+        getServiceData().setSecuredServiceResponse(getClientManager().getClient().target(getSecuredServiceUrl())
+          .request().header("Authorization", "Bearer " + getTokenData().getAccessToken()).get(String.class));
+      }
+      catch (Exception e)
+      {
+        getUtil().facesErrorMessage("Secured service response: %s".formatted(e.getMessage()));
+      }
+    }
+
+The difference between the first and the second invocation is that, in the latest
+case, we're including our acces token with the `Authorization` HTTP header, as 
+a bearer token. Hence, given that the user info associated to this token has 
+the `manager` role, we're granted access to the secured endpoint as well.
+
+This concludes our showcase of the `authorization token` grant type implemented
+by Keycloak.
+
+### The `resource owner password` grant type
+
+The `resource owner password` grant type is a simplified flow defined by the 
+OAuth 2.0 specifications. It consists in the following steps:
+
+  1 The user provides the username and password directly to the front-end. 
+  2 The front-end sends these credentials along with the client ID and its secret to the Keycloak server.
+  3 The Keycloak server validates the user credentials and the client authentication.
+  4 If the validation succeeds, then the Keycloak server issues an access token.
+  5 This token is used to invoke the back-end service.
+  6 The back-end services validates the access token.
+  7 If the validatio succeeds then the back-end allows the access to its services.
+
+Please notice that this grant type should only be used when there is a high degree
+of trust between the user, as a resource owner, the fornt-end and the back-end.
+The front-end must be capable of securely storing the user's credentials. This 
+grant type isn't recommended for third-party applications as it requires direct
+handling of user credentials.
+
+The `token-resource-owner-password-tab.xhtml` page showcases this grant type. It
+is similar to the `login-authorization-codetab.xhtml` one, that we have seen 
+precedently, in the sense that, in addition of common input data like `Client ID`
+and `Scope`, it doesn't require things like `Response type`, `Prompt`, etc., 
+but only the user name and password. Then, the `ResourceOwnerPasswordView` 
+backing bean class provides the following implementation of the abstract method
+`extractTokenData`:
+
+    @Override
+    protected String[] extractTokenData(Map<String, Object> tokenMap) throws InvalidTokenException
+    {
+      getTokenData().setaccessToken((String) tokenMap.get("access_token"));
+      if (getTokenData().getAccessToken() == null)
+        throw new InvalidTokenException("The access token is null");
+      return getTokenData().getAccessToken().split("\\.");
+    }
+
+This method is used in the base class `AbstractCommonView` in order to specialize
+the `sendTokenRequest()` one for the specific case of the `resource owner password`
+gran type.
+
+The `Invoke service` function works the same way as it used to do in the case 
+of the `authorization code` grant type.
+
+### The `client credentials` grant type
+
+This grant type is the simplest one because it only requires a `Client ID` and 
+the associated `Scope`, if any. This grant type is dedicated to machine-to-machine
+communication cases and, as such, there is no user involvement. Hence, instead 
+of authenticating the user, as a resource owner, only the client is authenticated,
+based on its secret. If the authentication succeeds, an access token is directly
+provided and it can be used to further invoke the back-end services.
+
+The `token-client-credentials-tab.xhtml` page showcases this grant type. It
+is similar to the `token-resource-owner-password.xhtml` one, that we have seen
+precedently, in the sense that it only requires the `Client ID`
+and the associated `Scope`, if any. Then, the `ServiceAccountView`
+backing bean class provides the following implementation of the abstract method
+`extractTokenData`:
+
+    @Override
+    protected String[] extractTokenData(Map tokenMap) throws InvalidTokenException
+    {
+      getTokenData().setaccessToken((String)tokenMap.get("access_token"));
+      if (getTokenData().getAccessToken() == null)
+        throw new InvalidTokenException("The access token is null");
+      return getTokenData().getAccessToken().split("\\.");
+    }
+
+This method is used in the base class `AbstractCommonView` in order to specialize
+the `sendTokenRequest()` one for the specific case of the `client credentials`
+grant type.
+
+The `Invoke service` function works the same way as it used to do in the case
+of the `authorization code` and `resource owner password` grant types.
