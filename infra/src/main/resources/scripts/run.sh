@@ -5,6 +5,7 @@ docker run --name keycloak --rm -d \
   -v $(pwd)/src/main/resources/fe-acc.json:/opt/keycloak/customization/fe-acc.json \
   -v $(pwd)/src/main/resources/fe-ropc.json:/opt/keycloak/customization/fe-ropc.json \
   -v $(pwd)/src/main/resources/fe-sac.json:/opt/keycloak/customization/fe-sac.json \
+  -v $(pwd)/src/main/resources/scripts/ex.sh:/opt/keycloak/customization/ex.sh \
   -v $(pwd)/src/main/resources/scripts/customize.sh:/opt/keycloak/customization/customize.sh \
   --network host \
   quay.io/keycloak/keycloak:latest start-dev > /dev/null 2>&1

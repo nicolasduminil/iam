@@ -179,11 +179,12 @@ public abstract class AbstractCommonView<T extends OAuth20Request>
     getAuthData().reset();
     getTokenData().reset();
     getUserInfoData().reset();
-    getUserInfoData().reset();
+    getServiceData().reset();
     ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
     externalContext.redirect(UriBuilder
       .fromPath(externalContext.getRequestContextPath() + "/" + getSandBoxRedirect())
       .queryParam("activeIndex", "0").build().toString());
+    util.logout(realm);
   }
 
   public void invokePublicService()

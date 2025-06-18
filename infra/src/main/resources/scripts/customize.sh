@@ -30,12 +30,15 @@ create_keycloak_client()
   return 0
 }
 
-KCADM=/opt/keycloak/bin/kcadm.sh
+export KCADM=/opt/keycloak/bin/kcadm.sh
 $KCADM config credentials --server http://$1 --realm master --user admin --password admin
 $KCADM create realms -s realm=myrealm -s enabled=true
 $KCADM create users -r myrealm -s username=john -s enabled=true -s "emailVerified=true" \
   -s "email=john.doe@emailcom" -s "firstName=John" -s "lastName=Doe"
 $KCADM set-password -r myrealm --username john --new-password password1
+$KCADM create users -r myrealm -s username=jane -s enabled=true -s "emailVerified=true" \
+    -s "email=jane.doe@emailcom" -s "firstName=Jane" -s "lastName=Doe"
+$KCADM set-password -r myrealm --username jane --new-password password1
 create_keycloak_client \
   "/opt/keycloak/customization/fe-acc.json" \
   "/opt/keycloak/.fe-acc-secret"
@@ -46,5 +49,9 @@ create_keycloak_client \
   "/opt/keycloak/customization/fe-sac.json" \
   "/opt/keycloak/.fe-sac-secret"
 $KCADM create roles -r myrealm -s name=manager
+$KCADM create roles -r myrealm -s name=webauthn-users
 $KCADM add-roles --uusername john --rolename manager -r myrealm
+$KCADM add-roles --uusername jane --rolename manager -r myrealm
+$KCADM add-roles -r myrealm --uusername jane --rolename webauthn-users
 $KCADM add-roles --uusername service-account-fe-sac -r myrealm --rolename manager
+/opt/keycloak/customization/ex.sh

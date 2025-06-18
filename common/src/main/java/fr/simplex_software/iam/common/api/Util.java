@@ -145,4 +145,9 @@ public class Util
       return false;
     }
   }
+
+  public void logout(String realm)
+  {
+    keycloak.realm(realm).logoutAll();
+  }
 }
