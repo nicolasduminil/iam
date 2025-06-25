@@ -1,13 +1,18 @@
 package fr.simplex_software.iam.common.api;
 
 import fr.simplex_software.iam.common.api.exceptions.*;
+import fr.simplex_software.iam.common.api.mappers.*;
+import fr.simplex_software.iam.domain.schema.data.*;
+import io.netty.handler.codec.http.*;
 import jakarta.enterprise.context.*;
 import jakarta.faces.application.*;
 import jakarta.faces.context.*;
 import jakarta.inject.*;
 import jakarta.json.*;
 import jakarta.json.bind.*;
+import jakarta.ws.rs.core.*;
 import org.keycloak.admin.client.*;
+import org.keycloak.admin.client.resource.*;
 import org.keycloak.representations.idm.*;
 
 import java.net.*;
@@ -69,7 +74,7 @@ public class Util
       {
         if (param.startsWith("redirect_uri"))
           param = URLDecoder.decode(param, StandardCharsets.UTF_8);
-        if  (param.startsWith("password"))
+        if (param.startsWith("password"))
         {
           String[] parts = param.split("=", 2);
           if (parts.length > 1)
@@ -101,11 +106,63 @@ public class Util
       .collect(Collectors.toList());
   }
 
+  public UserRepresentation getRealmUser(String realm, String user)
+  {
+    return keycloak.realm(realm).users().search(user).get(0);
+  }
+
+  public RolesResource getRealmRolesResource(String realm)
+  {
+    return keycloak.realm(realm).roles();
+  }
+
+  public RoleRepresentation getRealmRole(String realm, String role)
+  {
+    return getRealmRolesResource(realm).get(role).toRepresentation();
+  }
+
+  public void createRealmUserRepresentation(String realm, UserRepresentation user) throws UserCreationException
+  {
+    Response response = keycloak.realm(realm).users().create(user);
+    if (response.getStatus() != Response.Status.CREATED.getStatusCode())
+      throw new UserCreationException("Unexpected exception while trying to creat user %s".formatted(user.getUsername()));
+    String userId = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
+    keycloak.realm(realm).users().get(userId).resetPassword(user.getCredentials().getFirst());
+  }
+
+  public void createRealmUser(String realm, UserData userData) throws UserCreationException
+  {
+    UserRepresentation user = KcUserMapper.INSTANCE.toRepresentation(userData);
+    user.setCredentials(List.of(createCredentialRepresentation(userData.password())));
+    user.setEnabled(true);
+    createRealmUserRepresentation(realm, user);
+  }
+
+  public CredentialRepresentation createCredentialRepresentation(String password)
+  {
+    CredentialRepresentation cred = new CredentialRepresentation();
+    cred.setType(CredentialRepresentation.PASSWORD);
+    cred.setValue(password);
+    cred.setTemporary(false);
+    return cred;
+  }
+
+  public void assignRoleToUser(String realm, String user, RoleRepresentation role)
+  {
+    keycloak.realm(realm).users().get(user).roles().realmLevel().add(Collections.singletonList(role));
+  }
+
   public List<String> getRealmClients(String realm)
   {
     return keycloak.realm(realm).clients()
       .findAll().stream().map(ClientRepresentation::getClientId)
       .collect(Collectors.toList());
+  }
+
+  public String getClientSecret(String realm, String clientId)
+  {
+    return keycloak.realm(realm).clients()
+      .findByClientId(clientId).getFirst().getSecret();
   }
 
   public Map<String, Object> truncateTokens(Map<String, Object> tokens)

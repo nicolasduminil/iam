@@ -22,9 +22,17 @@ public class ResourceOwnerPasswordTokenRequest extends ClientBase implements OAu
     super.setGrantType(GrantType.PASSWORD);
   }
 
-  public ResourceOwnerPasswordTokenRequest(String clientId, GrantType grantType, List<String> scopes, String userName, String password, String clientSecret)
+  public ResourceOwnerPasswordTokenRequest(String clientId, List<String> scopes, String userName, String password, String clientSecret)
   {
-    super(clientId, grantType, scopes);
+    super(clientId, GrantType.PASSWORD, scopes);
+    this.userName = userName;
+    this.password = password;
+    this.clientSecret = clientSecret;
+  }
+
+  public ResourceOwnerPasswordTokenRequest(String clientId, String userName, String password, String clientSecret)
+  {
+    super(clientId, GrantType.PASSWORD);
     this.userName = userName;
     this.password = password;
     this.clientSecret = clientSecret;

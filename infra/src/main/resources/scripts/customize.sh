@@ -50,6 +50,7 @@ create_keycloak_client \
   "/opt/keycloak/.fe-sac-secret"
 $KCADM create roles -r myrealm -s name=manager
 $KCADM create roles -r myrealm -s name=webauthn-users
+$KCADM create roles -r myrealm -s name=user
 $KCADM add-roles --uusername john --rolename manager -r myrealm
 $KCADM add-roles --uusername jane --rolename manager -r myrealm
 $KCADM add-roles -r myrealm --uusername jane --rolename webauthn-users

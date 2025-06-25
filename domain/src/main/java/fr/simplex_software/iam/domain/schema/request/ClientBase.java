@@ -30,6 +30,11 @@ public class ClientBase implements Serializable
     this.grantType = grantType;
   }
 
+  public ClientBase(String clientId, GrantType grantType)
+  {
+    this (clientId, grantType, List.of("profile", "email"));
+  }
+
   public String getClientId()
   {
     return clientId;
