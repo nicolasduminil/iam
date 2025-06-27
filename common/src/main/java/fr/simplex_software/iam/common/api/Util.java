@@ -3,7 +3,6 @@ package fr.simplex_software.iam.common.api;
 import fr.simplex_software.iam.common.api.exceptions.*;
 import fr.simplex_software.iam.common.api.mappers.*;
 import fr.simplex_software.iam.domain.schema.data.*;
-import io.netty.handler.codec.http.*;
 import jakarta.enterprise.context.*;
 import jakarta.faces.application.*;
 import jakarta.faces.context.*;
@@ -17,6 +16,8 @@ import org.keycloak.representations.idm.*;
 
 import java.net.*;
 import java.nio.charset.*;
+import java.time.*;
+import java.time.format.*;
 import java.util.*;
 import java.util.stream.*;
 
@@ -30,6 +31,9 @@ public class Util
   Keycloak keycloak;
   private final Jsonb jsonb = JsonbBuilder.create(new JsonbConfig()
     .withFormatting(true));
+  @Named
+  @Inject
+  ClientManager clientManager;
 
   public void facesErrorMessage(String message)
   {
@@ -102,7 +106,7 @@ public class Util
   public List<String> getRealmUsers(String realm)
   {
     return keycloak.realm(realm).users().list().stream()
-      .map(user -> user.getUsername())
+      .map(AbstractUserRepresentation::getUsername)
       .collect(Collectors.toList());
   }
 
@@ -165,6 +169,74 @@ public class Util
       .findByClientId(clientId).getFirst().getSecret();
   }
 
+  public int countFailedLoginsLastNDays(String serverUrl, String realm, int days) throws FailedToGetEventException
+  {
+    List<EventRepresentation> events = getEvents(serverUrl, realm, "LOGIN_ERROR", days);
+    return events.size();
+  }
+
+  public int countSuccessfulLoginsLastNDays(String serverUrl, String realm, int days) throws FailedToGetEventException
+  {
+    List<EventRepresentation> events = getEvents(serverUrl, realm,"LOGIN", days);
+    return events.size();
+  }
+
+  public int countClientCredentialTokenRequests(String serverUrl, String realm, String clientId, int days) throws FailedToGetEventException
+  {
+    List<EventRepresentation> events = getEvents(serverUrl, realm,"CLIENT_LOGIN", days);
+    return (int) events.stream()
+      .filter(event -> clientId.equals(event.getClientId()))
+      .count();
+  }
+
+  public List<String> getUsersByRole(String realm, String roleName) throws FailedToGetUsersByRole
+  {
+    try
+    {
+      Set<UserRepresentation> users = keycloak.realm(realm)
+        .roles()
+        .get(roleName)
+        .getRoleUserMembers();
+      return users.stream()
+        .map(UserRepresentation::getUsername)
+        .collect(Collectors.toList());
+    }
+    catch (Exception e)
+    {
+      throw new FailedToGetUsersByRole("Fail to get users for role %s".formatted(roleName));
+    }
+  }
+
+  public List<String> getAllRealmRoles(String realm)
+  {
+    List<RoleRepresentation> roles = keycloak.realm(realm)
+      .roles()
+      .list();
+    return roles.stream()
+      .map(RoleRepresentation::getName)
+      .collect(Collectors.toList());
+  }
+
+  public int countClientCredentialGrants(String serverUrl, String realm, String clientId, int daysBack) throws FailedToGetEventException
+  {
+    String token = keycloak.tokenManager().getAccessToken().getToken();
+    String url = String.format("%s/admin/realms/%s/events", serverUrl, realm);
+    String dateFrom = iso8601Date(Instant.now().minusSeconds(daysBack * 86400L));
+    Response response = clientManager.getClient().target(url)
+      .queryParam("type", "CLIENT_LOGIN")
+      .queryParam("dateFrom", dateFrom)
+      .request()
+      .header("Authorization", "Bearer " + token)
+      .get();
+    if (response.getStatus() != 200)
+      throw new FailedToGetEventException("Failed to get events: HTTP status code %d".formatted(response.getStatus()));
+    List<EventRepresentation> events = response.readEntity(new GenericType<>() {});
+    List<EventRepresentation> matchingEvents = events.stream()
+      .filter(e -> clientId.equals(e.getClientId()))
+      .toList();
+    return matchingEvents.size();
+  }
+
   public Map<String, Object> truncateTokens(Map<String, Object> tokens)
   {
     Map<String, Object> truncatedTokens = new HashMap<>();
@@ -206,5 +278,26 @@ public class Util
   public void logout(String realm)
   {
     keycloak.realm(realm).logoutAll();
+  }
+
+  private List<EventRepresentation> getEvents(String serverUrl, String realm,
+    String eventType, int daysBack) throws FailedToGetEventException
+  {
+    long since = Instant.now().minusSeconds(daysBack * 86400L).toEpochMilli();
+    String url = String.format("%s/admin/realms/%s/events", serverUrl, realm);
+    Response response = clientManager.getClient()
+      .target(url)
+      .queryParam("type", eventType)
+      .queryParam("dateFrom", iso8601Date(Instant.ofEpochMilli(since)))
+      .request()
+      .get();
+    if (response.getStatus() != 200)
+      throw new FailedToGetEventException("Failed to get events: HTTP status code %d".formatted(response.getStatus()));
+    return response.readEntity(List.class);
+  }
+
+  private String iso8601Date(Instant instant)
+  {
+    return DateTimeFormatter.ISO_INSTANT.format(instant);
   }
 }
