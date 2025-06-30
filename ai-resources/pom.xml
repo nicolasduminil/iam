@@ -16,12 +16,17 @@
       <artifactId>quarkus-rest-jsonb</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.quarkiverse.langchain4j</groupId>
-      <artifactId>quarkus-langchain4j-ollama</artifactId>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-openapi</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-amazon-lambda-rest</artifactId>
+      <artifactId>quarkus-container-image-jib</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.langchain4j</groupId>
+      <artifactId>quarkus-langchain4j-ollama</artifactId>
+      <version>1.0.2</version>
     </dependency>
     <dependency>
       <groupId>fr.simplex-software</groupId>
@@ -42,6 +47,37 @@
         <configuration>
           <parameters>true</parameters>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>com.dkanejs.maven.plugins</groupId>
+        <artifactId>docker-compose-maven-plugin</artifactId>
+        <version>4.0.0</version>
+        <inherited>false</inherited>
+        <executions>
+          <execution>
+            <id>up</id>
+            <phase>install</phase>
+            <goals>
+              <goal>up</goal>
+            </goals>
+            <configuration>
+              <composeFile>${project.basedir}/docker-compose.yaml</composeFile>
+              <detachedMode>true</detachedMode>
+            </configuration>
+          </execution>
+          <execution>
+            <id>down</id>
+            <phase>clean</phase>
+            <goals>
+              <goal>down</goal>
+            </goals>
+            <configuration>
+              <composeFile>${project.basedir}/docker-compose.yaml</composeFile>
+              <!--removeVolumes>true</removeVolumes-->
+              <!--removeOrphans>true</removeOrphans-->
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

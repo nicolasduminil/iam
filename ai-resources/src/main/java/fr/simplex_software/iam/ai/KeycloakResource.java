@@ -5,7 +5,7 @@ import jakarta.inject.*;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
 
-@Path("/keycloak-nlq")
+@Path("/nlq")
 public class KeycloakResource
 {
   @Inject

@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  ollama:
+    image: ollama/ollama
+    hostname: ollama
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    restart: unless-stopped
+  iam-llm:
+    image: nicolasduminil/iam-llm:1.0-SNAPSHOT
+    depends_on:
+      - ollama
+    hostname: iam-llm
+    container_name: iam-llm
+    links:
+      - ollama:ollama
+    ports:
+      - "8083:8083"
+    environment:
+      JAVA_DEBUG: "true"
+      JAVA_APP_DIR: /home/jboss
+      JAVA_APP_JAR: quarkus-run.jar
+volumes:
+  ollama_models:
